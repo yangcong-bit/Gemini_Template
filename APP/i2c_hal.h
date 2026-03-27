@@ -12,4 +12,10 @@ void I2CSendByte(unsigned char cSendByte);
 unsigned char I2CReceiveByte(void);
 void I2CInit(void);
 
+void eeprom_write(uint8_t *buf, uint8_t addr, uint8_t num);
+void eeprom_read(uint8_t *buf, uint8_t addr, uint8_t num);
+
+
+void mcp4017_write(uint8_t val);
+uint8_t mcp4017_read(void) ;
 #endif

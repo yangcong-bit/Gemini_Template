@@ -30,28 +30,33 @@ void LED_Disp(uint8_t led_status) {
  * @note   该函数由调度器定时调用 (例如在 scheduler.c 中注册为每 20ms 执行一次)
  */
 void LED_Proc(void) {
-    // 局部变量，用于最终汇总本次需要输出的 LED 状态
     uint8_t current_led = 0x00; 
     
-    // --- 以下为业务逻辑映射：根据 global_system.h 中的 sys 结构体状态，控制对应 LED ---
+    // 1. 页面指示功能 (LD1 / LD2)
+    if (sys.current_page == PAGE_DATA) current_led |= 0x01; 
+    if (sys.current_page == PAGE_PARA) current_led |= 0x02; 
     
-    // 示例 1：页面指示功能
-    if (sys.current_page == PAGE_DATA) {
-        current_led |= 0x01; // 位操作：点亮 LD1 (0000 0001)
-    } else if (sys.current_page == PAGE_PARA) {
-        current_led |= 0x02; // 位操作：点亮 LD2 (0000 0010)
+    // 2. 系统心跳指示灯 (利用系统滴答，LD3 每秒闪烁一次证明程序没卡死)
+    if (HAL_GetTick() % 1000 < 500) {
+        current_led |= 0x04; 
     }
     
-    // 示例 2：越限报警指示 (假设 sys 中有个电压阈值判断)
+    // 3. 越限报警逻辑 (如果 R37 超过了设定的安全阈值，LD4 长亮)
     if (sys.r37_voltage > sys.v_threshold) {
-        current_led |= 0x08; // 电压超标，点亮 LD4 (0000 1000)
+        current_led |= 0x08; 
     }
     
-    // 示例 3：事件反馈 (例如按键按下或串口接收完成)
-    if (sys.uart_rx_ready) {
-        current_led |= 0x80; // 串口有数据待处理，点亮 LD8 (1000 0000)
+    // 4. 后台事件指示 (正在往 EEPROM 烧录参数，或收到了串口指令未处理完时，点亮 LD8)
+    if (sys.eeprom_save_flag || sys.uart_rx_ready) {
+        current_led |= 0x80; 
     }
     
-    // 汇总完所有业务逻辑后，统一调用一次底层刷新函数
+    // 刷新底层硬件
     LED_Disp(current_led);
+    
+    // 【消费控制信箱】：防止按键事件在 ctrl 信箱溢出
+    if (sys.key_event_ctrl != 0) {
+        // 如果题目要求按键按下伴随蜂鸣器响，可写在这里
+        sys.key_event_ctrl = 0; 
+    }
 }

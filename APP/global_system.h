@@ -19,15 +19,34 @@ typedef struct {
     
     /* --- 传感器/硬件采集数据 --- */
     float    r37_voltage;      // 蓝桥杯板载电位器 R37 的转换电压
-    uint32_t ic_frequency;     // 定时器输入捕获测量的信号频率 (Hz)
+		float    r38_voltage;      // 蓝桥杯板载电位器 R38 的转换电压
     
     /* --- 用户设置参数 (通常需要掉电保存到 EEPROM) --- */
     float    v_threshold;      // 电压报警阈值
     uint32_t f_threshold;      // 频率报警阈值
     
     /* --- 跨模块事件标志位 --- */
-    uint8_t  key_event;        // 按键事件 (例如：1代表B1短按，11代表B1长按)
-    bool     uart_rx_ready;    // 串口指令接收完成标志
+		// --- 按键 控制标志 ---
+    uint8_t  key_event_ui;      // 供 LCD 界面模块消费的按键信箱
+    uint8_t  key_event_ctrl;    // 供 业务控制模块(如LED/蜂鸣器) 消费的按键信箱
+	
+		// --- EEPROM 控制标志 ---
+    bool eeprom_save_flag;  // 请求保存参数到 EEPROM 的标志位
+	
+		/* --- I2C 外设控制参数 --- */
+    uint8_t  res_step;         // MCP4017 可编程电阻步进值 (范围 0 ~ 127)
+	
+		// --- 串口通信交互标志 ---
+		bool     uart_rx_ready;    // 收到完整指令帧的标志
+    // (如果需要保存解析后的特定字符串，也可以加在这里)
+		
+		// --- PWM 输出控制参数 ---
+    uint32_t pwm_freq;   // 目标输出频率 (Hz)
+    float    pwm_duty;   // 目标占空比 (0.0f ~ 1.0f，例如 0.5 代表 50%)
+		
+		// --- 双通道测频数据 ---
+    uint32_t freq_ch1;  // Signal 1 频率 (PA15 / TIM2)
+    uint32_t freq_ch2;  // Signal 2 频率 (PB4 / TIM3)
 } SystemData_t;
 
 // 外部声明，由 global_system.c 或 main.c 实例化

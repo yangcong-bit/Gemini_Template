@@ -203,3 +203,72 @@ void I2CInit(void)
     GPIO_InitStructure.Speed = GPIO_SPEED_FREQ_HIGH;
     HAL_GPIO_Init(GPIOB, &GPIO_InitStructure);
 }
+
+
+/**
+ * @brief AT24C02 EEPROM 连续写函数
+ */
+void eeprom_write(uint8_t *buf, uint8_t addr, uint8_t num) {
+    while(num--) {
+        I2CStart();
+        I2CSendByte(0xA0); // 发送写设备地址
+        I2CWaitAck();
+        I2CSendByte(addr++); // 发送内存地址
+        I2CWaitAck();
+        I2CSendByte(*buf++); // 发送数据
+        I2CWaitAck();
+        I2CStop();
+        HAL_Delay(5); // AT24C02 内部烧写需要 5ms，连续写必须加延时
+    }
+}
+
+/**
+ * @brief AT24C02 EEPROM 连续读函数
+ */
+void eeprom_read(uint8_t *buf, uint8_t addr, uint8_t num) {
+    I2CStart();
+    I2CSendByte(0xA0); // 伪写，用来定位地址
+    I2CWaitAck();
+    I2CSendByte(addr);
+    I2CWaitAck();
+
+    I2CStart();
+    I2CSendByte(0xA1); // 发送读设备地址
+    I2CWaitAck();
+    while(num--) {
+        *buf++ = I2CReceiveByte();
+        if(num) {
+            I2CSendAck();    // 还没读完，给应答
+        } else {
+            I2CSendNotAck(); // 最后一个字节，给非应答
+        }
+    }
+    I2CStop();
+}
+
+/**
+ * @brief MCP4017 写入电阻步进值
+ * @param val: 0 ~ 127 (对应 0 ~ 100kΩ)
+ */
+void mcp4017_write(uint8_t val) {
+    I2CStart();
+    I2CSendByte(0x5E); // MCP4017 的写设备地址是 0x5E
+    I2CWaitAck();
+    I2CSendByte(val);  // 直接写入阻值档位
+    I2CWaitAck();
+    I2CStop();
+}
+
+/**
+ * @brief MCP4017 读取当前电阻步进值
+ */
+uint8_t mcp4017_read(void) {
+    uint8_t val;
+    I2CStart();
+    I2CSendByte(0x5F); // MCP4017 的读设备地址是 0x5F
+    I2CWaitAck();
+    val = I2CReceiveByte();
+    I2CSendNotAck();
+    I2CStop();
+    return val;
+}

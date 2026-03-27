@@ -11,7 +11,7 @@
 
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
-#include "stdio.h"
+#include "lcd.h"
 
 /* Exported types ------------------------------------------------------------*/
 /* ASCII Table: each character is 16 column (16dots large)
