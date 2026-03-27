@@ -48,7 +48,7 @@ static Task_t task_list[] = {
  */
 void Scheduler_Init(void) {
     // 此处可调用各个底层模块的初始化函数
-    LCD_Init();
+    //LCD_Init();
     LCD_Clear(Black);
     LCD_SetBackColor(Black);
     LCD_SetTextColor(White);

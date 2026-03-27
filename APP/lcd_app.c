@@ -21,7 +21,7 @@ void UI_Init(void) {
  * @note   由调度器定时调用 (建议 100ms 刷新一次，10FPS 对人眼已足够流畅且不占CPU)
  */
 void UI_Proc(void) {
-    char lcd_buf[21];
+    char lcd_buf[32];
 
     // ==========================================
     // 1. 消费 UI 专属的按键信箱

@@ -27,7 +27,6 @@
 TIM_HandleTypeDef htim1;
 TIM_HandleTypeDef htim2;
 TIM_HandleTypeDef htim3;
-DMA_HandleTypeDef hdma_tim3_ch1;
 
 /* TIM1 init function */
 void MX_TIM1_Init(void)
@@ -124,7 +123,7 @@ void MX_TIM2_Init(void)
   htim2.Instance = TIM2;
   htim2.Init.Prescaler = 80-1;
   htim2.Init.CounterMode = TIM_COUNTERMODE_UP;
-  htim2.Init.Period = 999;
+  htim2.Init.Period = 4294967295;
   htim2.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
   htim2.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
   if (HAL_TIM_Base_Init(&htim2) != HAL_OK)
@@ -262,34 +261,16 @@ void HAL_TIM_Base_MspInit(TIM_HandleTypeDef* tim_baseHandle)
     /* TIM3 clock enable */
     __HAL_RCC_TIM3_CLK_ENABLE();
 
-    __HAL_RCC_GPIOA_CLK_ENABLE();
+    __HAL_RCC_GPIOB_CLK_ENABLE();
     /**TIM3 GPIO Configuration
-    PA6     ------> TIM3_CH1
+    PB4     ------> TIM3_CH1
     */
-    GPIO_InitStruct.Pin = GPIO_PIN_6;
+    GPIO_InitStruct.Pin = GPIO_PIN_4;
     GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
     GPIO_InitStruct.Pull = GPIO_NOPULL;
     GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
     GPIO_InitStruct.Alternate = GPIO_AF2_TIM3;
-    HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
-
-    /* TIM3 DMA Init */
-    /* TIM3_CH1 Init */
-    hdma_tim3_ch1.Instance = DMA1_Channel3;
-    hdma_tim3_ch1.Init.Request = DMA_REQUEST_TIM3_CH1;
-    hdma_tim3_ch1.Init.Direction = DMA_PERIPH_TO_MEMORY;
-    hdma_tim3_ch1.Init.PeriphInc = DMA_PINC_DISABLE;
-    hdma_tim3_ch1.Init.MemInc = DMA_MINC_ENABLE;
-    hdma_tim3_ch1.Init.PeriphDataAlignment = DMA_PDATAALIGN_WORD;
-    hdma_tim3_ch1.Init.MemDataAlignment = DMA_MDATAALIGN_HALFWORD;
-    hdma_tim3_ch1.Init.Mode = DMA_CIRCULAR;
-    hdma_tim3_ch1.Init.Priority = DMA_PRIORITY_LOW;
-    if (HAL_DMA_Init(&hdma_tim3_ch1) != HAL_OK)
-    {
-      Error_Handler();
-    }
-
-    __HAL_LINKDMA(tim_baseHandle,hdma[TIM_DMA_ID_CC1],hdma_tim3_ch1);
+    HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
     /* TIM3 interrupt Init */
     HAL_NVIC_SetPriority(TIM3_IRQn, 0, 0);
@@ -369,12 +350,9 @@ void HAL_TIM_Base_MspDeInit(TIM_HandleTypeDef* tim_baseHandle)
     __HAL_RCC_TIM3_CLK_DISABLE();
 
     /**TIM3 GPIO Configuration
-    PA6     ------> TIM3_CH1
+    PB4     ------> TIM3_CH1
     */
-    HAL_GPIO_DeInit(GPIOA, GPIO_PIN_6);
-
-    /* TIM3 DMA DeInit */
-    HAL_DMA_DeInit(tim_baseHandle->hdma[TIM_DMA_ID_CC1]);
+    HAL_GPIO_DeInit(GPIOB, GPIO_PIN_4);
 
     /* TIM3 interrupt Deinit */
     HAL_NVIC_DisableIRQ(TIM3_IRQn);

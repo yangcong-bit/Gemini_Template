@@ -15,7 +15,7 @@
  * [0][x] 对应 ADC1_IN11 (R38电位器)
  * [1][x] 对应 ADC2_IN15 (R37电位器)
  */
-extern uint32_t dma_buff[2][30];
+extern uint16_t dma_buff[2][30];
 
 /** * @brief 换算后的实际电压值数组 (0 ~ 3.3V)
  * [0] 对应 R38

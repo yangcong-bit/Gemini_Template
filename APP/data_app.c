@@ -8,6 +8,7 @@
  */
 void Data_Proc(void) {
     // 1. 同步 ADC 换算结果到系统全局字典
+		adc_proc(); // <-- 必须加这句，先计算再赋值
     sys.r38_voltage = adc_value[0];
     sys.r37_voltage = adc_value[1];
     

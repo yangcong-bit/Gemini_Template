@@ -537,25 +537,25 @@ void LCD_WriteBMP(u32 BmpAddress)
 *******************************************************************************/
 void LCD_WriteReg(u8 LCD_Reg, u16 LCD_RegValue)
 {
-    GPIOB->BRR  |= GPIO_PIN_9;
-    GPIOB->BRR  |= GPIO_PIN_8;
-    GPIOB->BSRR |= GPIO_PIN_5;
+    GPIOB->BRR  = GPIO_PIN_9;
+    GPIOB->BRR  = GPIO_PIN_8;
+    GPIOB->BSRR = GPIO_PIN_5;
 
     GPIOC->ODR = LCD_Reg;
-    GPIOB->BRR  |= GPIO_PIN_5;
+    GPIOB->BRR  = GPIO_PIN_5;
     __nop();
     __nop();
     __nop();
-    GPIOB->BSRR |= GPIO_PIN_5;
-    GPIOB->BSRR |= GPIO_PIN_8;
+    GPIOB->BSRR = GPIO_PIN_5;
+    GPIOB->BSRR = GPIO_PIN_8;
 
     GPIOC->ODR = LCD_RegValue;
-    GPIOB->BRR  |= GPIO_PIN_5;
+    GPIOB->BRR  = GPIO_PIN_5;
     __nop();
     __nop();
     __nop();
-    GPIOB->BSRR |= GPIO_PIN_5;
-    GPIOB->BSRR |= GPIO_PIN_8;
+    GPIOB->BSRR = GPIO_PIN_5;
+    GPIOB->BSRR = GPIO_PIN_8;
 }
 /*******************************************************************************
 * Function Name  : LCD_ReadReg
@@ -568,28 +568,28 @@ u16 LCD_ReadReg(u8 LCD_Reg)
 {
     u16 temp;
 
-    GPIOB->BRR |= GPIO_PIN_9;
-    GPIOB->BRR |= GPIO_PIN_8;
-    GPIOB->BSRR |= GPIO_PIN_5;
+    GPIOB->BRR = GPIO_PIN_9;
+    GPIOB->BRR = GPIO_PIN_8;
+    GPIOB->BSRR = GPIO_PIN_5;
 
     GPIOC->ODR = LCD_Reg;
-    GPIOB->BRR |= GPIO_PIN_5;
+    GPIOB->BRR = GPIO_PIN_5;
     __nop();
     __nop();
     __nop();
-    GPIOB->BSRR |= GPIO_PIN_5;
-    GPIOB->BSRR |= GPIO_PIN_8;
+    GPIOB->BSRR = GPIO_PIN_5;
+    GPIOB->BSRR = GPIO_PIN_8;
 
     LCD_BusIn();
-    GPIOA->BRR |= GPIO_PIN_8;
+    GPIOA->BRR = GPIO_PIN_8;
     __nop();
     __nop();
     __nop();
     temp = GPIOC->IDR;
-    GPIOA->BSRR |= GPIO_PIN_8;
+    GPIOA->BSRR = GPIO_PIN_8;
 
     LCD_BusOut();
-    GPIOB->BSRR |= GPIO_PIN_9;
+    GPIOB->BSRR = GPIO_PIN_9;
 
     return temp;
 }
@@ -602,21 +602,21 @@ u16 LCD_ReadReg(u8 LCD_Reg)
 *******************************************************************************/
 void LCD_WriteRAM_Prepare(void)
 {
-    GPIOB->BRR  |=  GPIO_PIN_9;
-    GPIOB->BRR  |=  GPIO_PIN_8;
-    GPIOB->BSRR |=  GPIO_PIN_5;
+    GPIOB->BRR  =  GPIO_PIN_9;
+    GPIOB->BRR  =  GPIO_PIN_8;
+    GPIOB->BSRR =  GPIO_PIN_5;
 
     GPIOC->ODR = R34;
-    GPIOB->BRR  |=  GPIO_PIN_5;
+    GPIOB->BRR  =  GPIO_PIN_5;
     __nop();
     __nop();
     __nop();
-    GPIOB->BSRR |=  GPIO_PIN_5;
-    GPIOB->BSRR |=  GPIO_PIN_8;
+    GPIOB->BSRR =  GPIO_PIN_5;
+    GPIOB->BSRR =  GPIO_PIN_8;
     __nop();
     __nop();
     __nop();
-    GPIOB->BSRR |=  GPIO_PIN_9;
+    GPIOB->BSRR =  GPIO_PIN_9;
 }
 /*******************************************************************************
 * Function Name  : LCD_WriteRAM
@@ -627,21 +627,21 @@ void LCD_WriteRAM_Prepare(void)
 *******************************************************************************/
 void LCD_WriteRAM(u16 RGB_Code)
 {
-    GPIOB->BRR  |=  GPIO_PIN_9;
-    GPIOB->BSRR |=  GPIO_PIN_8;
-    GPIOB->BSRR |=  GPIO_PIN_5;
+    GPIOB->BRR  =  GPIO_PIN_9;
+    GPIOB->BSRR =  GPIO_PIN_8;
+    GPIOB->BSRR =  GPIO_PIN_5;
 
     GPIOC->ODR = RGB_Code;
-    GPIOB->BRR  |=  GPIO_PIN_5;
+    GPIOB->BRR  =  GPIO_PIN_5;
     __nop();
     __nop();
     __nop();
-    GPIOB->BSRR |=  GPIO_PIN_5;
-    GPIOB->BSRR |=  GPIO_PIN_8;
+    GPIOB->BSRR =  GPIO_PIN_5;
+    GPIOB->BSRR =  GPIO_PIN_8;
     __nop();
     __nop();
     __nop();
-    GPIOB->BSRR |=  GPIO_PIN_9;
+    GPIOB->BSRR =  GPIO_PIN_9;
 }
 /*******************************************************************************
 * Function Name  : LCD_ReadRAM
@@ -654,28 +654,28 @@ u16 LCD_ReadRAM(void)
 {
     u16 temp;
 
-    GPIOB->BRR  |=  GPIO_PIN_9;
-    GPIOB->BRR  |=  GPIO_PIN_8;
-    GPIOB->BSRR |=  GPIO_PIN_5;
+    GPIOB->BRR  =  GPIO_PIN_9;
+    GPIOB->BRR  =  GPIO_PIN_8;
+    GPIOB->BSRR =  GPIO_PIN_5;
 
     GPIOC->ODR = R34;
-    GPIOB->BRR  |=  GPIO_PIN_5;
+    GPIOB->BRR  =  GPIO_PIN_5;
     __nop();
     __nop();
     __nop();
-    GPIOB->BSRR |=  GPIO_PIN_5;
-    GPIOB->BSRR |=  GPIO_PIN_8;
+    GPIOB->BSRR =  GPIO_PIN_5;
+    GPIOB->BSRR =  GPIO_PIN_8;
 
     LCD_BusIn();
-    GPIOA->BRR |=  GPIO_PIN_8;
+    GPIOA->BRR =  GPIO_PIN_8;
     __nop();
     __nop();
     __nop();
     temp = GPIOC->IDR;
-    GPIOA->BSRR |=  GPIO_PIN_8;
+    GPIOA->BSRR =  GPIO_PIN_8;
 
     LCD_BusOut();
-    GPIOB->BSRR |=  GPIO_PIN_9;
+    GPIOB->BSRR =  GPIO_PIN_9;
 
     return temp;
 }
@@ -755,8 +755,8 @@ void LCD_CtrlLinesConfig(void)
 
     LCD_BusOut();
 
-    GPIOA->BSRR |= 0x0100;
-    GPIOB->BSRR |= 0x0220;
+    GPIOA->BSRR = 0x0100;
+    GPIOB->BSRR = 0x0220;
 }
 
 /*******************************************************************************

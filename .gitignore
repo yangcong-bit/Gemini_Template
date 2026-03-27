@@ -1,0 +1,32 @@
+# Keil MDK-ARM 编译生成的临时文件和垃圾文件
+*.o
+*.d
+*.crf
+*.map
+*.axf
+*.htm
+*.sct
+*.dep
+*.lnp
+*.lst
+*.obj
+*.iex
+*.hex
+*.bin
+
+# Keil 视窗配置和调试文件
+*.uvoptx
+*.uvgui.*
+*.uvguix.*
+*.bak
+*.scvd
+JLinkLog.txt
+*.Administrator
+*.ZYS20
+
+# STM32CubeMX 备份文件
+*.backup
+
+# 操作系统自动生成的垃圾文件
+.DS_Store
+Thumbs.db
