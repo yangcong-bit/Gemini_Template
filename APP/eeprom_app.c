@@ -20,7 +20,6 @@ void EEPROM_Init(void) {
     
     // 1. 读取标志位
     eeprom_read(&init_flag, ADDR_INIT_FLAG, 1);
-    HAL_Delay(5); 
     
     // 2. 判断是否是首次上电 (或者芯片被清空过)
     if (init_flag == MAGIC_NUM) {
@@ -54,7 +53,7 @@ void EEPROM_Proc(void) {
     static uint8_t  save_state = 0;
     static uint32_t save_timer = 0;
     
-    // 【关键修复】：新增影子缓存区，用于冻结保存瞬间的数据
+    // 影子缓存区，用于冻结保存瞬间的数据
     static float    shadow_v_threshold = 0.0f;
     static uint32_t shadow_f_threshold = 0;
     

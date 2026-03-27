@@ -57,6 +57,10 @@ void LED_Proc(void) {
     // 【消费控制信箱】：防止按键事件在 ctrl 信箱溢出
     if (sys.key_event_ctrl != 0) {
         // 如果题目要求按键按下伴随蜂鸣器响，可写在这里
-        sys.key_event_ctrl = 0; 
+        sys.key_event_ctrl = 0;
     }
+		//提示完 LD8 后，立刻清空串口接收标志，防止 LD8 永远常亮
+    if (sys.uart_rx_ready == true) {
+        sys.uart_rx_ready = false;
+		}
 }

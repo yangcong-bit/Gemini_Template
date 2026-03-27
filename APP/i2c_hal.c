@@ -4,7 +4,7 @@
 
 #include "i2c_hal.h"
 
-#define DELAY_TIME	20
+#define DELAY_TIME	40
 
 //
 void SDA_Input_Mode()
@@ -198,7 +198,7 @@ void I2CInit(void)
     GPIO_InitTypeDef GPIO_InitStructure = {0};
 
     GPIO_InitStructure.Pin = GPIO_PIN_7 | GPIO_PIN_6;
-    GPIO_InitStructure.Mode = GPIO_MODE_OUTPUT_PP;
+    GPIO_InitStructure.Mode = GPIO_MODE_OUTPUT_OD;
     GPIO_InitStructure.Pull = GPIO_PULLUP;
     GPIO_InitStructure.Speed = GPIO_SPEED_FREQ_HIGH;
     HAL_GPIO_Init(GPIOB, &GPIO_InitStructure);

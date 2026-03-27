@@ -26,11 +26,22 @@ int fputc(int ch, FILE *f) {
  * @note   在 main.c 的 while(1) 之前调用
  */
 void UART_Init(void) {
+    // 1. 初始化软件环形队列
     RB_Init(&uart_rb);
-    // 开启第一次单字节接收中断
+    
+    // 2. 彻底清空解析缓存数组
+    frame_len = 0;
+    memset(frame_buf, 0, sizeof(frame_buf));
+
+    // 3. 【防毛刺核心】：清除上电瞬间产生的硬件错误标志（溢出、帧错误等）
+    __HAL_UART_CLEAR_FLAG(&huart1, UART_CLEAR_OREF | UART_CLEAR_NEF | UART_CLEAR_PEF | UART_CLEAR_FEF);
+    
+    // 4. 【防毛刺核心】：强制清空硬件接收数据寄存器 (STM32G4系列特有)，把上电抖动产生的乱码直接倒进垃圾桶
+    __HAL_UART_SEND_REQ(&huart1, UART_RXDATA_FLUSH_REQUEST);
+
+    // 5. 开启第一次单字节接收中断
     HAL_UART_Receive_IT(&huart1, &rx_temp_byte, 1);
 }
-
 /**
  * @brief  串口接收中断回调函数 (这里是“生产者”)
  * @note   每收到 1 个字节，HAL 库会自动调用此函数。执行速度极快，不阻碍系统。
@@ -74,21 +85,31 @@ void UART_Proc(void) {
             }
             
             // ==========================================
-            // 3. 核心业务：进行字符串解析 (sscanf 或 strncmp)
+            // 3. 核心业务：进行字符串解析 (增强抗干扰能力)
             // ==========================================
             float new_v = 0.0f;
+            char *ptr; // 用于定位指令在缓冲区中的实际位置
             
-            if (sscanf(frame_buf, "SET_V:%f", &new_v) == 1) {
-                sys.v_threshold = new_v;          
-                sys.eeprom_save_flag = true;      
-                printf("OK: V_Thr Set to %.2f\r\n", new_v); 
+            // 使用 strstr 查找子串，容忍指令前面带有上电乱码
+            if ((ptr = strstr(frame_buf, "SET_V:")) != NULL) {
+                // 从找到指令的地方开始进行格式化提取
+                if (sscanf(ptr, "SET_V:%f", &new_v) == 1) {
+                    sys.v_threshold = new_v;          
+                    sys.eeprom_save_flag = true;      
+                    printf("OK: V_Thr Set to %.2f\r\n", new_v); 
+                }
             }
-            else if (strncmp(frame_buf, "GET_DATA", 8) == 0) {
+            else if (strstr(frame_buf, "GET_DATA") != NULL) {
+                // 只要包含了 GET_DATA 就认为是合法请求
                 printf("VOLT:%.2f, FREQ1:%d, FREQ2:%d\r\n", 
                         sys.r37_voltage, sys.freq_ch1, sys.freq_ch2);
             }
-            else {
-                printf("ERROR: Unknown Command\r\n");
+           else {
+                // 【防毛刺核心】：只有当首字符是正常的英文字母时，才认为是人类敲错的指令并报错。
+                // 如果是不可见字符或纯符号（上电乱码的典型特征），直接当成空气忽略掉，不打印 ERROR。
+                if (frame_len > 1 && ((frame_buf[0] >= 'A' && frame_buf[0] <= 'Z') || (frame_buf[0] >= 'a' && frame_buf[0] <= 'z'))) {
+                    printf("ERROR: Unknown Command\r\n");
+                }
             }
             
             sys.uart_rx_ready = true;
