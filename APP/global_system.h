@@ -5,9 +5,27 @@
 #include "main.h"
 #include <stdint.h>
 #include <stdbool.h>
-#include "main.h"
-#include <stdint.h>
-#include <stdbool.h>
+
+// ==========================================
+// eeprom历史记录结构体 (按需修改内部成员)
+// ==========================================
+typedef struct {
+    uint8_t  hour;
+    uint8_t  min;
+    uint8_t  sec;
+    float    volt;    // 示例：存储电压
+    uint32_t freq;    // 示例：存储频率
+} LogData_t;
+
+// ==========================================
+// 待写入 EEPROM 的异步缓冲队列
+// ==========================================
+#define LOG_Q_LEN 8
+typedef struct {
+    LogData_t buffer[LOG_Q_LEN];
+    uint8_t   head;
+    uint8_t   tail;
+} LogQueue_t;
 
 #define KEY_QUEUE_LEN  16  // 定义按键队列深度，16 个缓存对人工按键绰绰有余
 
@@ -18,13 +36,14 @@ typedef struct {
     uint16_t tail;                  // 队尾指针（读）
 } KeyQueue_t;
 
-/* 1. 定义 UI 页面枚举（状态机思想） */
+/* 定义 UI 页面枚举（状态机思想） */
 typedef enum {
     PAGE_DATA = 0,   // 数据实时监控界面
     PAGE_PARA,       // 参数设置界面
+		PAGE_LED
 } PageState_e;
 
-/* 2. 核心数据交互结构体 */
+/* 核心数据交互结构体 */
 typedef struct {
     /* --- 系统运行与 UI 状态 --- */
     PageState_e current_page;  // 当前屏幕所处页面
@@ -37,9 +56,9 @@ typedef struct {
     float    v_threshold;      // 电压报警阈值
     uint32_t f_threshold;      // 频率报警阈值
     
-    /* --- 跨模块事件标志位 --- */
-		// --- 按键 控制标志 ---
-    KeyQueue_t key_queue;      // 按键 FIFO 消息队列
+		// 跨模块事件队列
+    KeyQueue_t  key_queue;    
+    LogQueue_t  log_queue;   // 等待切片写入的日志队列
 	
 		// --- EEPROM 控制标志 ---
     bool eeprom_save_flag;  // 请求保存参数到 EEPROM 的标志位
