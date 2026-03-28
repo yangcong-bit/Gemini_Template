@@ -15,7 +15,6 @@ const uint8_t KEY_DOUBLE_CLICK_EN[5] = {
     0  // [4] KEY4 关闭双击
 };
 
-// 底层电平读取保持不变... (省略 Key_Read 的实现)
 static uint8_t Key_Read(void) {
     if (HAL_GPIO_ReadPin(GPIOB, GPIO_PIN_0) == GPIO_PIN_RESET) return KEY1;
     if (HAL_GPIO_ReadPin(GPIOB, GPIO_PIN_1) == GPIO_PIN_RESET) return KEY2;
