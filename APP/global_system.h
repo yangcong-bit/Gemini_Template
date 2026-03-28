@@ -5,6 +5,18 @@
 #include "main.h"
 #include <stdint.h>
 #include <stdbool.h>
+#include "main.h"
+#include <stdint.h>
+#include <stdbool.h>
+
+#define KEY_QUEUE_LEN  16  // 定义按键队列深度，16 个缓存对人工按键绰绰有余
+
+/* 定义简单的环形队列结构体 */
+typedef struct {
+    uint8_t  buffer[KEY_QUEUE_LEN]; // 消息体
+    uint16_t head;                  // 队头指针（写）
+    uint16_t tail;                  // 队尾指针（读）
+} KeyQueue_t;
 
 /* 1. 定义 UI 页面枚举（状态机思想） */
 typedef enum {
@@ -27,8 +39,7 @@ typedef struct {
     
     /* --- 跨模块事件标志位 --- */
 		// --- 按键 控制标志 ---
-    uint8_t  key_event_ui;      // 供 LCD 界面模块消费的按键信箱
-    uint8_t  key_event_ctrl;    // 供 业务控制模块(如LED/蜂鸣器) 消费的按键信箱
+    KeyQueue_t key_queue;      // 按键 FIFO 消息队列
 	
 		// --- EEPROM 控制标志 ---
     bool eeprom_save_flag;  // 请求保存参数到 EEPROM 的标志位

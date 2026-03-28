@@ -1,6 +1,7 @@
 /* lcd_app.c */
 #include "lcd_app.h"
 #include "rtc_app.h" 
+#include "key_app.h"
 #include <stdio.h>
 #include <string.h>
 
@@ -31,49 +32,52 @@ void UI_Init(void) {
  * @brief  UI 页面刷新任务 (100ms)
  */
 void UI_Proc(void) {
+    uint8_t key_val = 0;
+		char temp[32]; // 增加一个暂存数组
+
     // ==========================================
-    // 1. 消费 UI 专属的按键信箱
+    // 1. 从消息队列中消费所有积压的按键事件
     // ==========================================
-    if (sys.key_event_ui != 0) {
-        switch (sys.key_event_ui) {
-            case 1: // 切换页面
+    while (Key_Get_Event(&key_val)) {
+        switch (key_val) {
+            case 1: // 【B1 短按】
                 sys.current_page = (sys.current_page == PAGE_DATA) ? PAGE_PARA : PAGE_DATA;
-                // 注意：这里不再调用 LCD_Clear()，而是直接清空备份显存。
-                // 这样下一帧局部刷新机制会认为全屏都变了，自动重绘全屏，完美无闪烁。
-                memset(lcd_vram_bak, 0, sizeof(lcd_vram_bak)); 
+                memset(lcd_vram_bak, 0, sizeof(lcd_vram_bak)); // 如果你用了双缓存VRAM
                 break;
                 
-            case 2: // 增加电压报警阈值
+            case 2: // 【B2 短按】
                 if (sys.current_page == PAGE_PARA) {
                     sys.v_threshold += 0.5f;
                     if (sys.v_threshold > 3.3f) sys.v_threshold = 0.0f;
                 }
                 break;
                 
-            case 3: // 增加 PWM 占空比
+            case 3: // 【B3 短按】
                 if (sys.current_page == PAGE_PARA) {
                     sys.pwm_duty += 0.1f;
                     if (sys.pwm_duty > 1.0f) sys.pwm_duty = 0.1f;
                 }
                 break;
                 
-            case 4: // 请求保存阈值参数到 EEPROM
+            case 4: // 【B4 短按】
                 sys.eeprom_save_flag = true;
                 break;
                 
-            case 21: // 调节 MCP4017 可编程电阻档位
+            case 21: // 【B1 双击】
                 sys.res_step += 10;
                 if (sys.res_step > 127) sys.res_step = 0;
                 break;
                 
-            case 11: // 一键恢复所有参数的默认值
+            case 11: // 【B1 长按】
                 sys.v_threshold = 2.5f;
                 sys.pwm_duty = 0.5f;
                 sys.res_step = 64;
                 sys.eeprom_save_flag = true; 
                 break;
         }
-        sys.key_event_ui = 0; 
+        
+        // 如果还需要联动蜂鸣器或LED响一下，可以在这里统一处理：
+        // Beep_Tick(); 
     }
     
     // ==========================================
@@ -88,15 +92,30 @@ void UI_Proc(void) {
     // 3. 根据业务逻辑，将数据“画”入虚拟显存
     // ==========================================
     if (sys.current_page == PAGE_DATA) {
-        sprintf(lcd_vram[1], "      DATA PAGE     ");
-        sprintf(lcd_vram[3], " Time: %02d:%02d:%02d   ", time.Hours, time.Minutes, time.Seconds);
-        sprintf(lcd_vram[5], " V37:%.2fV V38:%.2fV", sys.r37_voltage, sys.r38_voltage);
-        sprintf(lcd_vram[7], " F1:%-5d F2:%-5d ", sys.freq_ch1, sys.freq_ch2);
+        sprintf(temp, "      DATA PAGE");
+        sprintf(lcd_vram[1], "%-20s", temp); // %-20s 保证必定占满 20 格
+        
+        sprintf(temp, " Time: %02d:%02d:%02d", time.Hours, time.Minutes, time.Seconds);
+        sprintf(lcd_vram[3], "%-20s", temp);
+        
+        sprintf(temp, " V37:%.2fV V38:%.2fV", sys.r37_voltage, sys.r38_voltage);
+        sprintf(lcd_vram[5], "%-20s", temp);
+        
+        sprintf(temp, " F1:%-5d F2:%-5d", sys.freq_ch1, sys.freq_ch2);
+        sprintf(lcd_vram[7], "%-20s", temp);
+        
     } else {
-        sprintf(lcd_vram[1], "      PARA PAGE     ");
-        sprintf(lcd_vram[3], " V_Thr: %.2f V      ", sys.v_threshold);
-        sprintf(lcd_vram[5], " PWM Duty: %3.0f%%   ", sys.pwm_duty * 100.0f);
-        sprintf(lcd_vram[7], " Res Step: %-3d      ", sys.res_step);
+        sprintf(temp, "      PARA PAGE");
+        sprintf(lcd_vram[1], "%-20s", temp);
+        
+        sprintf(temp, " V_Thr: %.2f V", sys.v_threshold);
+        sprintf(lcd_vram[3], "%-20s", temp);
+        
+        sprintf(temp, " PWM Duty: %3.0f%%", sys.pwm_duty * 100.0f);
+        sprintf(lcd_vram[5], "%-20s", temp);
+        
+        sprintf(temp, " Res Step: %-3d", sys.res_step);
+        sprintf(lcd_vram[7], "%-20s", temp);
     }
 
     // ==========================================

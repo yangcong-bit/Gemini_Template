@@ -1,7 +1,7 @@
 /* key_app.c */
 #include "key_app.h"
 
-// 底层电平读取保持不变
+// 底层电平读取保持不变... (省略 Key_Read 的实现)
 static uint8_t Key_Read(void) {
     if (HAL_GPIO_ReadPin(GPIOB, GPIO_PIN_0) == GPIO_PIN_RESET) return KEY1;
     if (HAL_GPIO_ReadPin(GPIOB, GPIO_PIN_1) == GPIO_PIN_RESET) return KEY2;
@@ -11,12 +11,32 @@ static uint8_t Key_Read(void) {
 }
 
 /**
- * @brief  按键事件广播函数 (向所有注册的“信箱”投递事件)
+ * @brief  【生产者】按键事件入队
  */
 static void Dispatch_KeyEvent(uint8_t event) {
-    sys.key_event_ui = event;     // 投递给 UI 刷新任务
-    sys.key_event_ctrl = event;   // 投递给 业务控制任务
-    // 以后如果加入蜂鸣器任务，也可以在这里加: sys.key_event_beep = event;
+    uint16_t next_head = (sys.key_queue.head + 1) % KEY_QUEUE_LEN;
+    
+    // 如果队列未满，则写入数据
+    if (next_head != sys.key_queue.tail) {
+        sys.key_queue.buffer[sys.key_queue.head] = event;
+        sys.key_queue.head = next_head;
+    }
+}
+
+/**
+ * @brief  【消费者】按键事件出队 (供 UI 等外部模块提取按键)
+ * @return true表示取到了按键，false表示队列为空
+ */
+bool Key_Get_Event(uint8_t *out_event) {
+    // 队列为空
+    if (sys.key_queue.head == sys.key_queue.tail) {
+        return false;
+    }
+    
+    // 取出数据并移动尾指针
+    *out_event = sys.key_queue.buffer[sys.key_queue.tail];
+    sys.key_queue.tail = (sys.key_queue.tail + 1) % KEY_QUEUE_LEN;
+    return true;
 }
 
 /**

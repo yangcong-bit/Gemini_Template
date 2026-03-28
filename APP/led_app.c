@@ -56,10 +56,7 @@ void LED_Proc(void) {
     // 刷新到底层硬件
     LED_Disp();
     
-    // 【消费控制信箱】
-    if (sys.key_event_ctrl != 0) {
-        sys.key_event_ctrl = 0;
-    }
+
     if (sys.uart_rx_ready == true) {
         sys.uart_rx_ready = false;
     }

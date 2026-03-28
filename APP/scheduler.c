@@ -20,8 +20,6 @@ SystemData_t sys = {
     .current_page = PAGE_DATA,
     .v_threshold = 2.5f,
     .f_threshold = 1000,
-		.key_event_ui = 0,    // 替换为 UI 信箱
-    .key_event_ctrl = 0   // 新增控制信箱
 };
 
 /* * 任务注册表
