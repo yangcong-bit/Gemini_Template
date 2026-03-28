@@ -55,9 +55,14 @@ typedef struct {
     uint32_t pwm_freq;   // 目标输出频率 (Hz)
     float    pwm_duty;   // 目标占空比 (0.0f ~ 1.0f，例如 0.5 代表 50%)
 		
-		// --- 双通道测频数据 ---
-    uint32_t freq_ch1;  // Signal 1 频率 (PA15 / TIM2)
-    uint32_t freq_ch2;  // Signal 2 频率 (PB4 / TIM3)
+    // --- 双通道输入捕获数据 (测频/周期/占空比) ---
+    uint32_t freq_ch1;     // Signal 1 频率 (Hz)
+    uint32_t period_ch1;   // Signal 1 周期 (us)
+    float    duty_ch1;     // Signal 1 占空比 (0.0~100.0 %)
+    
+    uint32_t freq_ch2;     // Signal 2 频率 (Hz)
+    uint32_t period_ch2;   // Signal 2 周期 (us)
+    float    duty_ch2;     // Signal 2 占空比 (0.0~100.0 %)
 } SystemData_t;
 
 // 外部声明，由 global_system.c 或 main.c 实例化
