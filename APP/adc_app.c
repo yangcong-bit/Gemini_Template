@@ -31,33 +31,31 @@ void ADC_Init(void) {
 }
 
 /**
- * @brief  ADC 数据处理任务
- * @note   该函数负责将 DMA 搬运来的 30 次底层生数据进行累加平均，
- * 并将其转换为实际的物理电压值。建议由调度器定时调用（如 50ms）。
+ * @brief  ADC 数据处理任务 (带中位值平均滤波)
  */
-void adc_proc(void)
-{
-    // 定义局部变量用于累加求和，防止每次进入函数时受到上一次历史值的影响
-    uint32_t sum_adc1 = 0;
-    uint32_t sum_adc2 = 0;
-    
-    // 1. 遍历 DMA 缓存，将连续采样的 30 个数据累加起来，实现软件均值滤波
-    for(uint8_t i = 0; i < 30; i++)
-    {
-        sum_adc1 += dma_buff[0][i]; // 累加 R38 (ADC1) 的原始数据
-        sum_adc2 += dma_buff[1][i]; // 累加 R37 (ADC2) 的原始数据
+void adc_proc(void) {
+    uint32_t sum_adc1 = 0, sum_adc2 = 0;
+    uint16_t max1 = 0, min1 = 4095;
+    uint16_t max2 = 0, min2 = 4095;
+
+    // 1. 遍历并找出最大最小值
+    for(uint8_t i = 0; i < 30; i++) {
+        // 通道 1 (R38)
+        if(dma_buff[0][i] > max1) max1 = dma_buff[0][i];
+        if(dma_buff[0][i] < min1) min1 = dma_buff[0][i];
+        sum_adc1 += dma_buff[0][i];
+
+        // 通道 2 (R37)
+        if(dma_buff[1][i] > max2) max2 = dma_buff[1][i];
+        if(dma_buff[1][i] < min2) min2 = dma_buff[1][i];
+        sum_adc2 += dma_buff[1][i];
     }
 
-    /* * 2. 计算平均值并转换为实际电压
-     * 转换公式说明：
-     * - sum_adc1 / 30.0f  : 求出 30 次采样的平均值 (范围 0 ~ 4095)
-     * - * 3.3f / 4096.0f  : STM32 的 ADC 是 12 位精度，即 2^12 = 4096，
-     * 基准电压为 3.3V。按比例换算得到实际电压。
-     */
-    adc_value[0] = (sum_adc1 / 30.0f) * 3.3f / 4096.0f; // 算出 R38 电压
-    adc_value[1] = (sum_adc2 / 30.0f) * 3.3f / 4096.0f; // 算出 R37 电压
-    
-    // （可选）如果你的系统使用了 global_system.h 字典架构，可以在这里同步更新字典：
-    // sys.r38_voltage = adc_value[0];
-    // sys.r37_voltage = adc_value[1];
+    // 2. 去头去尾求平均 (30 - 2 = 28)
+    sum_adc1 = sum_adc1 - max1 - min1;
+    sum_adc2 = sum_adc2 - max2 - min2;
+
+    // 3. 换算为电压 (基准 3.3V, 12位精度 4096)
+    adc_value[0] = (sum_adc1 / 28.0f) * 3.3f / 4096.0f; 
+    adc_value[1] = (sum_adc2 / 28.0f) * 3.3f / 4096.0f; 
 }
