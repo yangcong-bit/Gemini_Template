@@ -13,7 +13,6 @@
 /* --- 引入所有受支持业务模块的处理函数头文件 --- */
 #include "key_app.h"
 #include "led_app.h"
-#include "data_app.h"
 #include "lcd_app.h"
 #include "uart_app.h"
 #include "eeprom_app.h"
@@ -22,6 +21,7 @@
 #include "mcp4017_app.h"
 #include "i2c_hal.h"
 #include "adc_app.h"
+#include "exam_logic.h"
 
 /* ==========================================
  * 核心数据字典物理实例化 (整个系统唯一真实的内存空间)
@@ -44,13 +44,13 @@ SystemData_t sys = {
 static Task_t task_list[] = {
     // 任务入口函数       执行周期(ms)  时间戳初始值
     {Key_Proc,         10,          0}, ///< [交互] 按键扫描状态机，10ms 保证跟手且有效消抖
-    {UART_Proc,        10,          0}, ///< [通信] 串口协议解析检测，10ms 处理 DMA 缓冲防堆积
-    {LED_Proc,         20,          0}, ///< [UI]   LED 状态硬件刷新，20ms 响应足够迅速
+    {Logic_UART_Proc,  10,          0}, ///< [通信] 串口协议解析检测，10ms 处理 DMA 缓冲防堆积
+    {Logic_LED_Proc,   20,          0}, ///< [UI]   LED 状态硬件刷新，20ms 响应足够迅速
     {TIM_Proc,         20,          0}, ///< [外设] PWM 动态重装载任务，20ms 响应频占变化
-    {Data_Proc,        50,          0}, ///< [核心] ADC、RTC 及全局数据结算大本营，50ms
+    {Logic_Data_Proc,  50,          0}, ///< [核心] ADC、RTC 及全局数据结算大本营，50ms
     {MCP4017_Proc,     50,          0}, ///< [外设] I2C 可编程电阻动态阻值同步，50ms
     {Freq_Proc,        50,          0}, ///< [外设] 测频占空比防溢出结算状态机，50ms
-    {UI_Proc,          100,         0}, ///< [UI]   LCD 局部查表重绘，100ms (10FPS 人眼流畅)
+    {Logic_UI_Proc,    100,         0}, ///< [UI]   LCD 局部查表重绘，100ms (10FPS 人眼流畅)
     {EEPROM_Proc,      5,           0}  ///< [极速] EEPROM I2C 后台极速单字节切片烧录机，5ms
 };
 

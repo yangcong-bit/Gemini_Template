@@ -1340,11 +1340,6 @@
               <FilePath>..\APP\Src\adc_app.c</FilePath>
             </File>
             <File>
-              <FileName>data_app.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\APP\Src\data_app.c</FilePath>
-            </File>
-            <File>
               <FileName>debug_log.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\APP\Src\debug_log.c</FilePath>
@@ -1413,6 +1408,11 @@
               <FileName>uart_app.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\APP\Src\uart_app.c</FilePath>
+            </File>
+            <File>
+              <FileName>exam_logic.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\APP\Src\exam_logic.c</FilePath>
             </File>
           </Files>
         </Group>

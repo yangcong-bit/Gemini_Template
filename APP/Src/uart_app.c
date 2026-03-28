@@ -60,36 +60,36 @@ void HAL_UARTEx_RxEventCallback(UART_HandleTypeDef *huart, uint16_t Size) {
     }
 }
 
-/**
- * @brief  串口协议解析任务 (消费者)
- * @note   建议调度周期：10ms。
- */
-void UART_Proc(void) {
-    // 检测系统统一的数据就绪标志位
-    if (sys.uart_rx_ready == true) {
-        
-        float temp_v = 0.0f;
-        
-        // --- 业务解析逻辑开始 ---
-        // 范例：接收 "SET_V:2.55\r\n" 指令，修改电压阈值
-        if (sscanf((char *)uart_rx_buf, "SET_V:%f", &temp_v) == 1) {
-            
-            // 参数合法性校验防呆 (0.0V ~ 3.3V)
-            if (temp_v >= 0.0f && temp_v <= 3.3f) {
-                sys.v_threshold = temp_v;
-                UART_SendString("OK\r\n");
-            } else {
-                UART_SendString("ERR: Out of Range\r\n");
-            }
-        } else {
-            UART_SendString("ERR: Format Error\r\n");
-        }
-        // --- 业务解析逻辑结束 ---
-        
-        // 【核心闭环】：消费完毕，必须清空标志位！否则任务会死锁重复执行
-        sys.uart_rx_ready = false;
-    }
-}
+///**
+// * @brief  串口协议解析任务 (消费者)
+// * @note   建议调度周期：10ms。
+// */
+//void UART_Proc(void) {
+//    // 检测系统统一的数据就绪标志位
+//    if (sys.uart_rx_ready == true) {
+//        
+//        float temp_v = 0.0f;
+//        
+//        // --- 业务解析逻辑开始 ---
+//        // 范例：接收 "SET_V:2.55\r\n" 指令，修改电压阈值
+//        if (sscanf((char *)uart_rx_buf, "SET_V:%f", &temp_v) == 1) {
+//            
+//            // 参数合法性校验防呆 (0.0V ~ 3.3V)
+//            if (temp_v >= 0.0f && temp_v <= 3.3f) {
+//                sys.v_threshold = temp_v;
+//                UART_SendString("OK\r\n");
+//            } else {
+//                UART_SendString("ERR: Out of Range\r\n");
+//            }
+//        } else {
+//            UART_SendString("ERR: Format Error\r\n");
+//        }
+//        // --- 业务解析逻辑结束 ---
+//        
+//        // 【核心闭环】：消费完毕，必须清空标志位！否则任务会死锁重复执行
+//        sys.uart_rx_ready = false;
+//    }
+//}
 
 /**
  * @brief  阻塞式串口字符串发送函数
