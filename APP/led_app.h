@@ -3,12 +3,13 @@
 #define __LED_APP_H
 
 #include "main.h"
-#include "global_system.h" // 引入全局数据字典，用于获取业务状态
+#include "global_system.h" 
 
-// 硬件底层操作接口
-void LED_Disp(uint8_t led_status);
+// 暴露给外部的 LED 控制数组，0 灭，1 亮
+// [0] 对应 LD1, [7] 对应 LD8
+extern uint8_t led_ctrl[8];
 
-// 调度器任务函数
+void LED_Disp(void);
 void LED_Proc(void);
 
 #endif
