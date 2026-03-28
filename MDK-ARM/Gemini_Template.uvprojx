@@ -340,7 +340,7 @@
               <MiscControls></MiscControls>
               <Define>USE_HAL_DRIVER,STM32G431xx</Define>
               <Undefine></Undefine>
-              <IncludePath>../Core/Inc;../Drivers/STM32G4xx_HAL_Driver/Inc;../Drivers/STM32G4xx_HAL_Driver/Inc/Legacy;../Drivers/CMSIS/Device/ST/STM32G4xx/Include;../Drivers/CMSIS/Include;../APP</IncludePath>
+              <IncludePath>../Core/Inc;../Drivers/STM32G4xx_HAL_Driver/Inc;../Drivers/STM32G4xx_HAL_Driver/Inc/Legacy;../Drivers/CMSIS/Device/ST/STM32G4xx/Include;../Drivers/CMSIS/Include;..\APP\Inc</IncludePath>
             </VariousControls>
           </Cads>
           <Aads>
@@ -1335,79 +1335,84 @@
           <GroupName>APP</GroupName>
           <Files>
             <File>
-              <FileName>scheduler.c</FileName>
+              <FileName>adc_app.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\APP\scheduler.c</FilePath>
-            </File>
-            <File>
-              <FileName>led_app.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\APP\led_app.c</FilePath>
-            </File>
-            <File>
-              <FileName>lcd.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\APP\lcd.c</FilePath>
-            </File>
-            <File>
-              <FileName>i2c_hal.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\APP\i2c_hal.c</FilePath>
-            </File>
-            <File>
-              <FileName>key_app.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\APP\key_app.c</FilePath>
-            </File>
-            <File>
-              <FileName>lcd_app.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\APP\lcd_app.c</FilePath>
+              <FilePath>..\APP\Src\adc_app.c</FilePath>
             </File>
             <File>
               <FileName>data_app.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\APP\data_app.c</FilePath>
+              <FilePath>..\APP\Src\data_app.c</FilePath>
+            </File>
+            <File>
+              <FileName>debug_log.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\APP\Src\debug_log.c</FilePath>
             </File>
             <File>
               <FileName>eeprom_app.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\APP\eeprom_app.c</FilePath>
-            </File>
-            <File>
-              <FileName>ringbuffer.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\APP\ringbuffer.c</FilePath>
-            </File>
-            <File>
-              <FileName>uart_app.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\APP\uart_app.c</FilePath>
-            </File>
-            <File>
-              <FileName>tim_app.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\APP\tim_app.c</FilePath>
-            </File>
-            <File>
-              <FileName>adc_app.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\APP\adc_app.c</FilePath>
+              <FilePath>..\APP\Src\eeprom_app.c</FilePath>
             </File>
             <File>
               <FileName>freq_app.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\APP\freq_app.c</FilePath>
+              <FilePath>..\APP\Src\freq_app.c</FilePath>
+            </File>
+            <File>
+              <FileName>i2c_hal.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\APP\Src\i2c_hal.c</FilePath>
+            </File>
+            <File>
+              <FileName>key_app.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\APP\Src\key_app.c</FilePath>
+            </File>
+            <File>
+              <FileName>lcd.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\APP\Src\lcd.c</FilePath>
+            </File>
+            <File>
+              <FileName>lcd_app.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\APP\Src\lcd_app.c</FilePath>
+            </File>
+            <File>
+              <FileName>led_app.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\APP\Src\led_app.c</FilePath>
             </File>
             <File>
               <FileName>mcp4017_app.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\APP\mcp4017_app.c</FilePath>
+              <FilePath>..\APP\Src\mcp4017_app.c</FilePath>
+            </File>
+            <File>
+              <FileName>ringbuffer.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\APP\Src\ringbuffer.c</FilePath>
             </File>
             <File>
               <FileName>rtc_app.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\APP\rtc_app.c</FilePath>
+              <FilePath>..\APP\Src\rtc_app.c</FilePath>
+            </File>
+            <File>
+              <FileName>scheduler.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\APP\Src\scheduler.c</FilePath>
+            </File>
+            <File>
+              <FileName>tim_app.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\APP\Src\tim_app.c</FilePath>
+            </File>
+            <File>
+              <FileName>uart_app.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\APP\Src\uart_app.c</FilePath>
             </File>
           </Files>
         </Group>

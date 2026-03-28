@@ -1,11 +1,11 @@
 /**
- * CT117E-M4 / GPIO - I2C
-*/
-
+ * @file    i2c_hal.c
+ * @brief   软件 I2C 底层模拟协议与芯片驱动扩展
+ * @note    内含蓝桥杯官方驱动，以及追加的 AT24C02 连续读写与 MCP4017 控制函数。
+ */
 #include "i2c_hal.h"
 
-#define DELAY_TIME	40
-
+#define DELAY_TIME  40
 //
 void SDA_Input_Mode()
 {
@@ -207,18 +207,20 @@ void I2CInit(void)
 
 /**
  * @brief AT24C02 EEPROM 连续写函数
+ * @note  【警告】该函数内部包含 HAL_Delay(5)！
+ * 严禁在主循环中直接使用它保存大数据，必须配合 eeprom_app.c 的异步切片状态机使用。
  */
 void eeprom_write(uint8_t *buf, uint8_t addr, uint8_t num) {
     while(num--) {
         I2CStart();
-        I2CSendByte(0xA0); // 发送写设备地址
+        I2CSendByte(0xA0);   // 写设备地址
         I2CWaitAck();
-        I2CSendByte(addr++); // 发送内存地址
+        I2CSendByte(addr++); // 内存地址
         I2CWaitAck();
-        I2CSendByte(*buf++); // 发送数据
+        I2CSendByte(*buf++); // 数据字节
         I2CWaitAck();
         I2CStop();
-        HAL_Delay(5); // AT24C02 内部烧写需要 5ms，连续写必须加延时
+        HAL_Delay(5); // 物理烧录死区时间
     }
 }
 
@@ -227,13 +229,13 @@ void eeprom_write(uint8_t *buf, uint8_t addr, uint8_t num) {
  */
 void eeprom_read(uint8_t *buf, uint8_t addr, uint8_t num) {
     I2CStart();
-    I2CSendByte(0xA0); // 伪写，用来定位地址
+    I2CSendByte(0xA0); // 伪写定位
     I2CWaitAck();
     I2CSendByte(addr);
     I2CWaitAck();
 
     I2CStart();
-    I2CSendByte(0xA1); // 发送读设备地址
+    I2CSendByte(0xA1); // 读指令
     I2CWaitAck();
     while(num--) {
         *buf++ = I2CReceiveByte();
@@ -247,25 +249,25 @@ void eeprom_read(uint8_t *buf, uint8_t addr, uint8_t num) {
 }
 
 /**
- * @brief MCP4017 写入电阻步进值
+ * @brief MCP4017 可编程数字电阻写入档位
  * @param val: 0 ~ 127 (对应 0 ~ 100kΩ)
  */
 void mcp4017_write(uint8_t val) {
     I2CStart();
-    I2CSendByte(0x5E); // MCP4017 的写设备地址是 0x5E
+    I2CSendByte(0x5E); // MCP4017 设备地址
     I2CWaitAck();
-    I2CSendByte(val);  // 直接写入阻值档位
+    I2CSendByte(val);  // 写入游标步进值
     I2CWaitAck();
     I2CStop();
 }
 
 /**
- * @brief MCP4017 读取当前电阻步进值
+ * @brief MCP4017 读取当前游标步进值
  */
 uint8_t mcp4017_read(void) {
     uint8_t val;
     I2CStart();
-    I2CSendByte(0x5F); // MCP4017 的读设备地址是 0x5F
+    I2CSendByte(0x5F); 
     I2CWaitAck();
     val = I2CReceiveByte();
     I2CSendNotAck();
