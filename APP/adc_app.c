@@ -19,6 +19,10 @@ float adc_value[2];
  * @note  必须在 main 的 while(1) 之前调用
  */
 void ADC_Init(void) {
+	
+		HAL_ADCEx_Calibration_Start(&hadc1, ADC_SINGLE_ENDED);
+    HAL_ADCEx_Calibration_Start(&hadc2, ADC_SINGLE_ENDED);
+	
     // 启动 ADC1 (对应 R38)，将数据搬运到 dma_buff[0]
     HAL_ADC_Start_DMA(&hadc1, (uint32_t*)dma_buff[0], 30);
     
