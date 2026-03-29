@@ -61,7 +61,7 @@ typedef struct {
 typedef enum {
     PAGE_DATA = 0,   ///< 数据实时监控界面
     PAGE_PARA,       ///< 参数设置界面
-    PAGE_LED         ///< (预留) LED 测试界面
+    PAGE_RECD        // 统计界面 
 } PageState_e;
 
 /* ==========================================
@@ -115,7 +115,25 @@ typedef struct {
     
     // 后台事件指示灯软定时器 (杜绝标志位死锁导致的 LED 常亮)
     uint8_t  led8_timer;       ///< [Ticks] 赋值 >0 时 LED8 亮起，每过一个调度周期递减直至 0 后自动熄灭
+
+    // 【计算后的核心物理量】
+    int32_t  f_a_cal;  // A 通道校准后频率 (可能为负数，用有符号整型)
+    int32_t  f_b_cal;  // B 通道校准后频率
     
+    // 【系统参数】
+    uint32_t para_pd;  // 突变参数 (默认 1000)
+    uint32_t para_ph;  // 超限参数 (默认 5000)
+    int32_t  para_px;  // 校准参数 (默认 0，注意范围是 -1000 ~ 1000)
+
+    // 【统计次数】
+    uint32_t count_nda; // A 突变次数
+    uint32_t count_ndb; // B 突变次数
+    uint32_t count_nha; // A 超限次数
+    uint32_t count_nhb; // B 超限次数
+
+    // 【UI 状态标志】
+    uint8_t  data_mode; // 0: 频率模式(Hz/KHz), 1: 周期模式(uS/mS)
+		
 } SystemData_t;
 
 /* 外部声明，整个工程仅在 scheduler.c 中实例化唯一的一份物理内存 */
