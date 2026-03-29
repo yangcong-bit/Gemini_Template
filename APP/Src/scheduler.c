@@ -46,6 +46,7 @@ static Task_t task_list[] = {
     {Key_Proc,         10,          0}, ///< [交互] 按键扫描状态机，10ms 保证跟手且有效消抖
     {Logic_UART_Proc,  10,          0}, ///< [通信] 串口协议解析检测，10ms 处理 DMA 缓冲防堆积
     {Logic_LED_Proc,   20,          0}, ///< [UI]   LED 状态硬件刷新，20ms 响应足够迅速
+		{Logic_Ctrl_Proc,  50,      		0}, ///< [按键] 按键消费与业务逻辑路由 (50ms，极速响应)
     {TIM_Proc,         20,          0}, ///< [外设] PWM 动态重装载任务，20ms 响应频占变化
     {Logic_Data_Proc,  50,          0}, ///< [核心] ADC、RTC 及全局数据结算大本营，50ms
     {MCP4017_Proc,     50,          0}, ///< [外设] I2C 可编程电阻动态阻值同步，50ms
