@@ -57,6 +57,10 @@ void Error_Handler(void);
 /* USER CODE END EFP */
 
 /* Private defines -----------------------------------------------------------*/
+#define FREQ_CH2_HW_Pin GPIO_PIN_8
+#define FREQ_CH2_HW_GPIO_Port GPIOA
+#define FREQ_CH1_HW_Pin GPIO_PIN_15
+#define FREQ_CH1_HW_GPIO_Port GPIOA
 
 /* USER CODE BEGIN Private defines */
 

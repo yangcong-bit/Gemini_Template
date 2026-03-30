@@ -1,14 +1,7 @@
-/**
- * @file    exam_logic.c
- * @brief   考场业务逻辑总览 (彻底分离 MVC 架构)
- * @note    在比赛时，你只需要修改这一个文件。
- * 包含：按键处理(Ctrl)、数据联动(Model)、屏幕/LED(View)。
- */
-
+// exam_logic.c
 #include "exam_logic.h"
 #include "global_system.h" 
 
-// --- 引入底层对外暴露的 API ---
 #include "key_app.h"
 #include "led_app.h"
 #include "lcd.h"
@@ -19,18 +12,12 @@
 #include <stdio.h>
 #include <string.h>
 
-
-/* ==========================================================
- * [模块 1]：核心控制层 (Controller) - 按键消费与逻辑路由
- * @note   建议调度周期：50ms。只修改 sys 字典，绝不碰显存画图。
- * ========================================================== */
 void Logic_Ctrl_Proc(void) {
     uint8_t key_val = 0;
-    
-    // 从消息队列中消费所有积压的按键事件
+
     while (Key_Get_Event(&key_val)) {
         switch (key_val) {
-            case 1: // 【B1 短按】：无缝切换页面
+            case 1: 
                 if (sys.current_page == PAGE_PARA) {
                     if(sys.key_data==0){
                     sys.PD=sys.PD+100;
@@ -50,8 +37,8 @@ void Logic_Ctrl_Proc(void) {
                     }
                 }
                 break;
-                
-            case 2: // 【B2 短按】：在设置页增加阈值
+
+            case 2: 
                 if (sys.current_page == PAGE_PARA) {
                     if(sys.key_data==0){
                     sys.PD=sys.PD-100;
@@ -71,8 +58,8 @@ void Logic_Ctrl_Proc(void) {
                     }
                 }
                 break;
-                
-            case 3: // 【B3 短按】：
+
+            case 3: 
                 if (sys.current_page == PAGE_DATA) {
                 sys.flag=!sys.flag;
                 }else if(sys.current_page == PAGE_PARA){
@@ -84,7 +71,7 @@ void Logic_Ctrl_Proc(void) {
                 sys.key_data=0;
                 }
                 }
-                
+
                 break;
             case 4:
                 if(sys.current_page==PAGE_DATA){
@@ -101,23 +88,13 @@ void Logic_Ctrl_Proc(void) {
     }
 }
 
-/* ==========================================================
- * [模块 2]：全局数据采集与联动中枢 (Model)
- * @note   建议调度周期：10ms。负责搬运底层数据到 sys 字典，并处理核心逻辑。
- * ========================================================== */
 void Logic_Data_Proc(void) {
-     
-    
-// ==========================================================
-    // [极简拿分版] 3秒固定窗口频率突变检测 (NDA / NDB)
-    // ==========================================================
+
     static uint16_t time_count = 0;
-    
-    // 赋初值：最大值给0，最小值给一个巨大的数
+
     static int32_t max_a = 0, min_a = 999999; 
     static int32_t max_b = 0, min_b = 999999;
 
-    // 1. 只要测到了有效频率，就不断刷新极值
     if (sys.FA > 0) {
         if (sys.FA > max_a) max_a = sys.FA;
         if (sys.FA < min_a) min_a = sys.FA;
@@ -127,55 +104,46 @@ void Logic_Data_Proc(void) {
         if (sys.FB < min_b) min_b = sys.FB;
     }
 
-    // 2. 计时器累加，满 3 秒（50ms * 60 = 3000ms）结算一次
     time_count++;
     if (time_count >= 60) {
-        // 结算 A 通道突变
+
         if ((max_a - min_a) > sys.PD) {
             sys.NDA++;
         }
-        // 结算 B 通道突变
+
         if ((max_b - min_b) > sys.PD) {
             sys.NDB++;
         }
-        
-        // 结算完毕，所有状态重置，迎接下一个 3 秒
+
         max_a = 0; min_a = 999999;
         max_b = 0; min_b = 999999;
         time_count = 0;
     }
-    
-    // 1. 唤醒采集层，将最新的 ADC 电压和 RTC 时间更新到 sys 字典
+
     adc_proc(); 
     rtc_proc();
-    
+
     sys.FA=sys.freq_ch1-sys.PX;
     sys.FB=sys.freq_ch2-sys.PX;
-    
+
     if(sys.Alog==0 && sys.FA>sys.PH){
     sys.Alog=1;
     sys.NHA++;
     }else
     sys.Alog=0;
-    
+
     if(sys.Blog==0 && sys.FB>sys.PH){
      sys.Blog=1;
      sys.NHB++;
     }else
     sys.Blog=0;
-    
-   
-    
+
     }
 
-/* ==========================================================
- * [模块 3]：LED 指示灯业务映射 (View)
- * @note   建议调度周期：20ms。纯粹只读 sys 字典，决定硬件亮灭。
- * ========================================================== */
 void Logic_LED_Proc(void) {
-    // 1. 擦除上一帧状态
+
     for(int i = 0; i < 8; i++) sys.led_ctrl[i] = 0;
-    
+
     if(sys.current_page==PAGE_DATA){
         sys.led_ctrl[0]=1;
      }else if(sys.current_page==PAGE_PARA){
@@ -183,53 +151,38 @@ void Logic_LED_Proc(void) {
      }
      if(sys.FA>sys.PH)sys.led_ctrl[1]=1;else sys.led_ctrl[1]=0;
      if(sys.FB>sys.PH)sys.led_ctrl[2]=1;else sys.led_ctrl[2]=0;
-    
+
      if(sys.NDA>3 || sys.NDB>3){
      sys.led_ctrl[7]=1;
      }else {
      sys.led_ctrl[7]=0;
      }
-     
-    // 4. 提交到底层锁存器刷新硬件
+
     LED_Disp();
 }
 
-/* ==========================================================
- * [模块 4]：串口协议解析与回复 (Controller 扩展)
- * @note   建议调度周期：10ms。处理 DMA 后台搬运完毕的不定长指令。
- * ========================================================== */
 void Logic_UART_Proc(void) {
-    
-    
-    
+
 }
 
-/* ==========================================================
- * [模块 5]：LCD 屏幕渲染引擎 (View)
- * @note   建议调度周期：100ms (10FPS)。纯粹只读 sys 字典，双缓冲防闪。
- * ========================================================== */
-static char lcd_vram[10][21];      // 当前帧工作显存
-static char lcd_vram_bak[10][21];  // 历史帧备份显存 (防闪屏核心)
+static char lcd_vram[10][21];      
+static char lcd_vram_bak[10][21];  
 
 void Logic_UI_Proc(void) {
     char temp[32]; 
     float UI_FA;
     float UI_FB;
-    
 
-    // 1. 监测页面切换：若发现当前页面与历史页面不符，强制清空备份显存，抹除残影
     static PageState_e last_page = PAGE_DATA;
     if (sys.current_page != last_page) {
         memset(lcd_vram_bak, 0, sizeof(lcd_vram_bak));
         last_page = sys.current_page;
     }
 
-    // 2. 擦除工作显存画布 (必须填满 20 个空格，防止上一次长字符串的尾部残留)
     for(int i = 0; i < 10; i++) {
         sprintf(lcd_vram[i], "                    "); 
     }
 
-    
     if(sys.current_page == PAGE_DATA){
         sprintf(temp, "        DATA");
         sprintf(lcd_vram[1], "%-20s", temp);
@@ -243,7 +196,7 @@ void Logic_UI_Proc(void) {
         sprintf(temp, "     V=%.2fHz",UI_FA);
         sprintf(lcd_vram[3], "%-20s", temp);
         }
-        
+
         if(sys.FB>=1000){
             UI_FB=sys.FB/1000;
             sprintf(temp, "     V=%.2fKHz",UI_FB);
@@ -279,11 +232,11 @@ void Logic_UI_Proc(void) {
             sprintf(temp, "     B=NULL"); 
         }
         sprintf(lcd_vram[4], "%-20s", temp);
-    
+
     }
-    
+
     }else if(sys.current_page == PAGE_PARA){
-    
+
         sprintf(temp, "       PARA");
         sprintf(lcd_vram[1], "%-20s", temp);
         sprintf(temp, "     PD=%dHz",sys.PD);
@@ -294,9 +247,9 @@ void Logic_UI_Proc(void) {
         sprintf(lcd_vram[5], "%-20s", temp);
         sprintf(temp, "     %d",sys.key_data);
         sprintf(lcd_vram[7], "%-20s", temp);
-    
+
     }else if(sys.current_page == PAGE_RECD){
-    
+
         sprintf(temp, "       RECD");
         sprintf(lcd_vram[1], "%-20s", temp);
         sprintf(temp, "     NDA=%dHz",sys.NDA);
@@ -307,48 +260,14 @@ void Logic_UI_Proc(void) {
         sprintf(lcd_vram[5], "%-20s", temp);
         sprintf(temp, "     NHB=%dHz",sys.NHB);
         sprintf(lcd_vram[6], "%-20s", temp);
-    
-    }
-    
-    
-//    // 3. 将 sys 字典变量格式化进显存
-//    if (sys.current_page == PAGE_DATA) {
-//        sprintf(temp, "   MONITOR PAGE");
-//        sprintf(lcd_vram[1], "%-20s", temp); 
-//        
-//        // sys.eeprom_log_idx 记录了下一个要写入的空槽位，减 1 就是最新保存的数据
-//        uint8_t latest_idx = (sys.eeprom_log_idx - 1 + MAX_RECORDS) % MAX_RECORDS;
-//        
-//        // 直接从 RAM 镜像中秒读数据，无需任何延时
-//        uint8_t   saved_volt = sys.eeprom_history[latest_idx].min;
-//        uint8_t   saved_hour = sys.eeprom_history[latest_idx].hour;
-//        
-//        // 直接拿去 sprintf 渲染屏幕
-//        sprintf(lcd_vram[2], " Last Volt: %dV", saved_volt);
-//        
-//        sprintf(temp, " Time: %02d:%02d:%02d", sys.hour, sys.min, sys.sec);
-//        sprintf(lcd_vram[3], "%-20s", temp);
-//        
-//        sprintf(temp, " Volt: %.2f V", sys.r37_voltage);
-//        sprintf(lcd_vram[5], "%-20s", temp);
-//        
-//        sprintf(temp, " Alarm Thr: %.1f V", sys.duty_ch1);
-//        sprintf(lcd_vram[7], "%-20s", temp);
-//        
-//    } else if (sys.current_page == PAGE_PARA) {
-//        sprintf(temp, "   PARA SETTING");
-//        sprintf(lcd_vram[1], "%-20s", temp);
-//        
-//        sprintf(temp, " V_Thr: %.1f V", sys.duty_ch2);
-//        sprintf(lcd_vram[4], "%-20s", temp);
-//    }
 
-    // 4. 对比备份显存，差异化刷新底层硬件
+    }
+
     for(uint8_t i = 0; i < 10; i++) {
-        // strcmp 为 0 代表字符串相同，不为 0 代表该行发生了变化
+
         if (strcmp(lcd_vram[i], lcd_vram_bak[i]) != 0) {
             LCD_DisplayStringLine(i * 24, (uint8_t *)lcd_vram[i]); 
-            // 刷新屏幕后，将工作显存同步回备份显存
+
             strcpy(lcd_vram_bak[i], lcd_vram[i]);
         }
     }
