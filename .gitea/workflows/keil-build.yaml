@@ -1,58 +1,51 @@
 name: STM32 Keil Automated Build
-run-name: 自动编译并发布 STM32 固件
+run-name: Auto Build and Publish STM32 Firmware
 
 on:
   push:
     branches:
-      - main  # 只有推送到 main 分支时才触发流水线
+      - main
 
 jobs:
   build-and-publish:
-    runs-on: windows # 绑定你 Windows 虚拟机的标签
+    runs-on: windows
     steps:
-      - name: 1. 拉取最新代码
+      - name: 1. Checkout Code
         uses: actions/checkout@v3
 
-      - name: 2. 调用 Keil 命令行编译
+      - name: 2. Compile via Keil
         run: |
           echo "Start compiling via Keil..."
           C:\Users\Administrator\AppData\Local\Keil_v5\UV4\UV4.exe -b MDK-ARM\Gemini_Template.uvprojx -j0 -o build_log.txt
           
-      - name: 3. 提取编译产物 (作为流水线临时附件)
+      - name: 3. Extract Artifacts
         uses: actions/upload-artifact@v3
         with:
           name: STM32_Firmware
-          # 精准定位到特定的 hex 文件
           path: |
             MDK-ARM\Gemini_Template\Gemini_Template.hex
             MDK-ARM\build_log.txt
 
-      - name: 4. 发布固件为 Gitea 软件包 (永久归档)
+      - name: 4. Publish Package
         shell: powershell
         run: |
-          # 直接指定固件的精准相对路径
           $HexFilePath = "MDK-ARM\Gemini_Template\Gemini_Template.hex"
           $FileName = "Gemini_Template.hex"
           
-          # 检查文件是否真的生成了
           if (-not (Test-Path $HexFilePath)) {
               Write-Error "Build failed or .hex file not found at $HexFilePath!"
               exit 1
           }
           
-          # 自动生成版本号，格式为 1.0.运行次数
           $Version = "1.0.${{ gitea.run_number }}"
           $PackageName = "STM32_Firmware"
           
-          # 拼接 API 地址
           $UploadUrl = "http://192.168.0.85:3000/api/packages/${{ gitea.repository_owner }}/generic/$PackageName/$Version/$FileName"
           
           echo "Uploading $FileName to Packages, version: $Version ..."
           
-          # 提取临时鉴权 Token
           $Token = "${{ gitea.token }}"
           
-          # 执行精准上传操作
           curl.exe -X PUT "$UploadUrl" -H "Authorization: Bearer $Token" -T "$HexFilePath"
           
           echo "Package published successfully!"
