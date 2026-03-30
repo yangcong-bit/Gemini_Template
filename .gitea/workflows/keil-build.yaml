@@ -22,18 +22,21 @@ jobs:
         uses: actions/upload-artifact@v3
         with:
           name: STM32_Firmware
+          # 精准定位到特定的 hex 文件
           path: |
-            MDK-ARM\*.hex
+            MDK-ARM\Gemini_Template\Gemini_Template.hex
             MDK-ARM\build_log.txt
 
       - name: 4. 发布固件为 Gitea 软件包 (永久归档)
         shell: powershell
         run: |
-          echo "Finding .hex file..."
-          $HexFile = Get-ChildItem -Path MDK-ARM\*.hex | Select-Object -First 1
+          # 直接指定固件的精准相对路径
+          $HexFilePath = "MDK-ARM\Gemini_Template\Gemini_Template.hex"
+          $FileName = "Gemini_Template.hex"
           
-          if (-not $HexFile) {
-              Write-Error "Build failed or .hex file not found!"
+          # 检查文件是否真的生成了
+          if (-not (Test-Path $HexFilePath)) {
+              Write-Error "Build failed or .hex file not found at $HexFilePath!"
               exit 1
           }
           
@@ -42,14 +45,14 @@ jobs:
           $PackageName = "STM32_Firmware"
           
           # 拼接 API 地址
-          $UploadUrl = "http://192.168.0.85:3000/api/packages/${{ gitea.repository_owner }}/generic/$PackageName/$Version/$($HexFile.Name)"
+          $UploadUrl = "http://192.168.0.85:3000/api/packages/${{ gitea.repository_owner }}/generic/$PackageName/$Version/$FileName"
           
-          echo "Uploading $($HexFile.Name) to Packages, version: $Version ..."
+          echo "Uploading $FileName to Packages, version: $Version ..."
           
           # 提取临时鉴权 Token
           $Token = "${{ gitea.token }}"
           
-          # 执行上传操作
-          curl.exe -X PUT "$UploadUrl" -H "Authorization: Bearer $Token" -T "$($HexFile.FullName)"
+          # 执行精准上传操作
+          curl.exe -X PUT "$UploadUrl" -H "Authorization: Bearer $Token" -T "$HexFilePath"
           
           echo "Package published successfully!"
