@@ -17,7 +17,7 @@ jobs:
         run: |
           echo "开始调用 Keil 进行静默编译..."
           # 注意：请确保这是你实际的 Keil 安装路径
-          C:\Keil_v5\UV4\UV4.exe -b MDK-ARM\Gemini_Template.uvprojx -j0 -o build_log.txt
+          C:\Users\Administrator\AppData\Local\Keil_v5\UV4\UV4.exe -b MDK-ARM\Gemini_Template.uvprojx -j0 -o build_log.txt
           
       - name: 3. 提取编译产物 (作为流水线临时附件)
         uses: actions/upload-artifact@v3
