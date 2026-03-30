@@ -37,7 +37,6 @@ jobs:
               exit 1
           }
           
-          # Convert to absolute path to prevent curl from losing the file
           $AbsolutePath = (Resolve-Path $HexFilePath).Path
           
           $Version = "1.0.${{ gitea.run_number }}"
@@ -49,7 +48,7 @@ jobs:
           
           $Token = "${{ secrets.CI_PACKAGE_TOKEN }}"
           
-          # Use --data-binary with absolute path and explicit Content-Type
-          curl.exe -X PUT "$UploadUrl" -H "Authorization: token $Token" -H "Content-Type: application/octet-stream" --data-binary "@$AbsolutePath"
+          # 抛弃 curl.exe，使用 Windows 原生的 Invoke-RestMethod 进行二进制直传
+          Invoke-RestMethod -Uri $UploadUrl -Method Put -Headers @{ "Authorization" = "token $Token" } -InFile $AbsolutePath
           
           echo "Package published successfully!"
