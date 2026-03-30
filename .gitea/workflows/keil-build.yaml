@@ -15,8 +15,7 @@ jobs:
 
       - name: 2. 调用 Keil 命令行编译
         run: |
-          echo "开始调用 Keil 进行静默编译..."
-          # 注意：请确保这是你实际的 Keil 安装路径
+          echo "Start compiling via Keil..."
           C:\Users\Administrator\AppData\Local\Keil_v5\UV4\UV4.exe -b MDK-ARM\Gemini_Template.uvprojx -j0 -o build_log.txt
           
       - name: 3. 提取编译产物 (作为流水线临时附件)
@@ -30,22 +29,22 @@ jobs:
       - name: 4. 发布固件为 Gitea 软件包 (永久归档)
         shell: powershell
         run: |
-          echo "正在查找编译出的 .hex 固件..."
+          echo "Finding .hex file..."
           $HexFile = Get-ChildItem -Path MDK-ARM\*.hex | Select-Object -First 1
           
           if (-not $HexFile) {
-              Write-Error "编译失败或找不到 .hex 文件！"
+              Write-Error "Build failed or .hex file not found!"
               exit 1
           }
           
-          # 自动生成版本号，格式为 1.0.运行次数 (例如 1.0.5)
+          # 自动生成版本号，格式为 1.0.运行次数
           $Version = "1.0.${{ gitea.run_number }}"
           $PackageName = "STM32_Firmware"
           
           # 拼接 API 地址
           $UploadUrl = "http://192.168.0.85:3000/api/packages/${{ gitea.repository_owner }}/generic/$PackageName/$Version/$($HexFile.Name)"
           
-          echo "开始上传 $($HexFile.Name) 到软件包仓库，版本号: $Version ..."
+          echo "Uploading $($HexFile.Name) to Packages, version: $Version ..."
           
           # 提取临时鉴权 Token
           $Token = "${{ gitea.token }}"
@@ -53,4 +52,4 @@ jobs:
           # 执行上传操作
           curl.exe -X PUT "$UploadUrl" -H "Authorization: Bearer $Token" -T "$($HexFile.FullName)"
           
-          echo "软件包发布成功！"
+          echo "Package published successfully!"
