@@ -37,6 +37,9 @@ jobs:
               exit 1
           }
           
+          # Convert to absolute path to prevent curl from losing the file
+          $AbsolutePath = (Resolve-Path $HexFilePath).Path
+          
           $Version = "1.0.${{ gitea.run_number }}"
           $PackageName = "STM32_Firmware"
           
@@ -46,6 +49,7 @@ jobs:
           
           $Token = "${{ secrets.CI_PACKAGE_TOKEN }}"
           
-          curl.exe -X PUT "$UploadUrl" -H "Authorization: token $Token" -T "$HexFilePath"
+          # Use --data-binary with absolute path and explicit Content-Type
+          curl.exe -X PUT "$UploadUrl" -H "Authorization: token $Token" -H "Content-Type: application/octet-stream" --data-binary "@$AbsolutePath"
           
           echo "Package published successfully!"
