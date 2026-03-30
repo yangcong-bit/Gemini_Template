@@ -44,7 +44,7 @@ jobs:
           
           echo "Uploading $FileName to Packages, version: $Version ..."
           
-          $Token = "${{ gitea.token }}"
+          $Token = "${{ secrets.PACKAGE_TOKEN }}"
           
           curl.exe -X PUT "$UploadUrl" -H "Authorization: Bearer $Token" -T "$HexFilePath"
           
