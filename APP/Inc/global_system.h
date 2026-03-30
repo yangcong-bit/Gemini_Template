@@ -13,6 +13,37 @@
 #include <stdint.h>
 #include <stdbool.h>
 
+
+/* ==========================================================
+ * 【核心配置】底层外设句柄与通道映射宏 (CubeMX 改了之后只改这里！)
+ * ========================================================== */
+
+// ---------------- [1. PWM 输出映射] ----------------
+#define PWM_TIM_HANDLE    htim1             // PWM所用定时器句柄
+#define PWM_TIM_CHANNEL   TIM_CHANNEL_1     // PWM所用通道
+
+// ---------------- [2. ADC 采集映射] ----------------
+#define ADC_R38_HANDLE    hadc1             // R38电位器对应的ADC句柄
+#define ADC_R37_HANDLE    hadc2             // R37电位器对应的ADC句柄
+
+// ---------------- [3. 串口通信映射] ----------------
+#define UART_APP_HANDLE   huart1            // 业务串口句柄
+#define UART_APP_INST     USART1            // 业务串口实例 (用于中断判定)
+
+// ---------------- [4. 频率捕获 CH1 映射 (如 PA1)] ----------------
+#define FREQ_CH1_HANDLE   htim2             // CH1所用定时器句柄
+#define FREQ_CH1_INST     TIM2              // CH1所用定时器实例
+#define FREQ_CH1_CH_MAIN  TIM_CHANNEL_1     // CH1测周期的主通道
+#define FREQ_CH1_CH_SUB   TIM_CHANNEL_2     // CH1测高电平的副通道
+#define FREQ_CH1_ACTIVE   HAL_TIM_ACTIVE_CHANNEL_1 // 中断回调判断通道
+
+// ---------------- [5. 频率捕获 CH2 映射 (如 PA6)] ----------------
+#define FREQ_CH2_HANDLE   htim3             // CH2所用定时器句柄
+#define FREQ_CH2_INST     TIM3              // CH2所用定时器实例
+#define FREQ_CH2_CH_MAIN  TIM_CHANNEL_1     // CH2测周期的主通道
+#define FREQ_CH2_CH_SUB   TIM_CHANNEL_2     // CH2测高电平的副通道
+#define FREQ_CH2_ACTIVE   HAL_TIM_ACTIVE_CHANNEL_1 // 中断回调判断通道
+
 /* ==========================================
  * 系统常量与队列深度定义区
  * ========================================== */
@@ -61,7 +92,7 @@ typedef struct {
 typedef enum {
     PAGE_DATA = 0,   ///< 数据实时监控界面
     PAGE_PARA,       ///< 参数设置界面
-    PAGE_RECD        // 统计界面 
+    PAGE_RECD        ///< 统计界面 
 } PageState_e;
 
 /* ==========================================
@@ -94,8 +125,6 @@ typedef struct {
     float    duty_ch2;         ///< [0.0~100.0 %] 通道2 实时高电平占空比
 
     /* --- 3. 用户设置参数与外设控制指令 (读写) --- */
-    float    v_threshold;      ///< [0.00~3.30 V] 用户设定的电压越限报警阈值
-    uint32_t f_threshold;      ///< [Hz]          用户设定的频率越限报警阈值
     uint8_t  res_step;         ///< [0~127]       MCP4017 可编程电阻步进值 (0~100kΩ)
     
     uint32_t pwm_freq;         ///< [Hz]          PWM 目标输出频率指令
@@ -113,27 +142,7 @@ typedef struct {
     bool     eeprom_save_flag; ///< [触发型] 请求将当前参数打包压入 EEPROM 队列的标志位
     bool     uart_rx_ready;    ///< [触发型] 串口收到一帧完整 DMA 数据的就绪标志位
     
-    // 后台事件指示灯软定时器 (杜绝标志位死锁导致的 LED 常亮)
-    uint8_t  led8_timer;       ///< [Ticks] 赋值 >0 时 LED8 亮起，每过一个调度周期递减直至 0 后自动熄灭
 
-    // 【计算后的核心物理量】
-    int32_t  f_a_cal;  // A 通道校准后频率 (可能为负数，用有符号整型)
-    int32_t  f_b_cal;  // B 通道校准后频率
-    
-    // 【系统参数】
-    uint32_t para_pd;  // 突变参数 (默认 1000)
-    uint32_t para_ph;  // 超限参数 (默认 5000)
-    int32_t  para_px;  // 校准参数 (默认 0，注意范围是 -1000 ~ 1000)
-
-    // 【统计次数】
-    uint32_t count_nda; // A 突变次数
-    uint32_t count_ndb; // B 突变次数
-    uint32_t count_nha; // A 超限次数
-    uint32_t count_nhb; // B 超限次数
-
-    // 【UI 状态标志】
-    uint8_t  data_mode; // 0: 频率模式(Hz/KHz), 1: 周期模式(uS/mS)
-		
 } SystemData_t;
 
 /* 外部声明，整个工程仅在 scheduler.c 中实例化唯一的一份物理内存 */

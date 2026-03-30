@@ -23,6 +23,7 @@ del /Q /S *.lnp
 del /Q /S *.lst
 del /Q /S *.obj
 del /Q /S *.iex
+del /Q /S *.hex
 
 :: 2. 删除 Keil 的用户界面布局缓存文件
 del /Q /S *.uvoptx

@@ -48,7 +48,6 @@ jobs:
           
           $Token = "${{ secrets.CI_PACKAGE_TOKEN }}"
           
-          # 抛弃 curl.exe，使用 Windows 原生的 Invoke-RestMethod 进行二进制直传
           Invoke-RestMethod -Uri $UploadUrl -Method Put -Headers @{ "Authorization" = "token $Token" } -InFile $AbsolutePath
           
           echo "Package published successfully!"

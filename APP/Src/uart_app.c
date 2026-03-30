@@ -26,11 +26,11 @@ uint16_t uart_rx_len = 0;
  */
 void UART_Init(void) {
     // 启动空闲中断 + DMA 接收监听
-    HAL_UARTEx_ReceiveToIdle_DMA(&huart1, dma_rx_buf, UART_RX_MAX_LEN);
+    HAL_UARTEx_ReceiveToIdle_DMA(&UART_APP_HANDLE, dma_rx_buf, UART_RX_MAX_LEN);
     
     // 【考场避坑神技】：强制关闭 DMA 半传输中断 (Half Transfer)
     // HAL库默认开启它，会导致发长包时在中间截断并触发异常回调，必须关掉！
-    __HAL_DMA_DISABLE_IT(&hdma_usart1_rx, DMA_IT_HT); 
+    __HAL_DMA_DISABLE_IT(&hdma_usart1_rx, DMA_IT_HT);
 }
 
 /**
@@ -39,7 +39,7 @@ void UART_Init(void) {
  * @param  Size: DMA 实际搬运了多少个字节
  */
 void HAL_UARTEx_RxEventCallback(UART_HandleTypeDef *huart, uint16_t Size) {
-    if (huart->Instance == USART1) {
+    if (huart->Instance == UART_APP_INST) {
         
         // 1. 极速将 DMA 后台数据抢救到业务缓冲区，防止被下一帧覆盖
         memcpy(uart_rx_buf, dma_rx_buf, Size);
@@ -51,50 +51,17 @@ void HAL_UARTEx_RxEventCallback(UART_HandleTypeDef *huart, uint16_t Size) {
         // 3. 标记数据就绪，通知主循环 scheduler 去处理
         sys.uart_rx_ready = true; 
         
-        // 4. 触发后台事件指示灯 (LED8 亮起 10 个调度周期，约 200ms)
-        sys.led8_timer = 10;
-        
-        // 5. 重启一轮新的 IDLE + DMA 接收监听
-        HAL_UARTEx_ReceiveToIdle_DMA(&huart1, dma_rx_buf, UART_RX_MAX_LEN);
+        // 4. 重启一轮新的 IDLE + DMA 接收监听
+        HAL_UARTEx_ReceiveToIdle_DMA(&UART_APP_HANDLE, dma_rx_buf, UART_RX_MAX_LEN);
         __HAL_DMA_DISABLE_IT(&hdma_usart1_rx, DMA_IT_HT); // 再次关闭半传输中断
     }
 }
 
-///**
-// * @brief  串口协议解析任务 (消费者)
-// * @note   建议调度周期：10ms。
-// */
-//void UART_Proc(void) {
-//    // 检测系统统一的数据就绪标志位
-//    if (sys.uart_rx_ready == true) {
-//        
-//        float temp_v = 0.0f;
-//        
-//        // --- 业务解析逻辑开始 ---
-//        // 范例：接收 "SET_V:2.55\r\n" 指令，修改电压阈值
-//        if (sscanf((char *)uart_rx_buf, "SET_V:%f", &temp_v) == 1) {
-//            
-//            // 参数合法性校验防呆 (0.0V ~ 3.3V)
-//            if (temp_v >= 0.0f && temp_v <= 3.3f) {
-//                sys.v_threshold = temp_v;
-//                UART_SendString("OK\r\n");
-//            } else {
-//                UART_SendString("ERR: Out of Range\r\n");
-//            }
-//        } else {
-//            UART_SendString("ERR: Format Error\r\n");
-//        }
-//        // --- 业务解析逻辑结束 ---
-//        
-//        // 【核心闭环】：消费完毕，必须清空标志位！否则任务会死锁重复执行
-//        sys.uart_rx_ready = false;
-//    }
-//}
 
 /**
  * @brief  阻塞式串口字符串发送函数
  * @param  str: 需发送的以 \0 结尾的字符串指针
  */
 void UART_SendString(char *str) {
-    HAL_UART_Transmit(&huart1, (uint8_t *)str, strlen(str), HAL_MAX_DELAY);
+    HAL_UART_Transmit(&UART_APP_HANDLE, (uint8_t *)str, strlen(str), HAL_MAX_DELAY);
 }

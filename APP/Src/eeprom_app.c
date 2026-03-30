@@ -90,10 +90,7 @@ void EEPROM_Proc(void) {
                 // 2. 立即更新 RAM 镜像，使得 UI 立刻显示，无需等待慢速烧录
                 sys.eeprom_history[sys.eeprom_log_idx] = shadow_log;
                 
-                // 3. 点亮指示灯 (赋生命值，自动递减熄灭)
-                sys.led8_timer = 10; 
-                
-                // 4. 跳转至烧录状态
+                // 3. 跳转至烧录状态
                 write_offset = 0; 
                 save_state = 1;  
             }
