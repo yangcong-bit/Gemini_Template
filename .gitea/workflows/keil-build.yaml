@@ -44,8 +44,8 @@ jobs:
           
           echo "Uploading $FileName to Packages, version: $Version ..."
           
-          $Token = "${{ secrets.PACKAGE_TOKEN }}"
+          $Token = "${{ secrets.CI_PACKAGE_TOKEN }}"
           
-          curl.exe -X PUT "$UploadUrl" -H "Authorization: Bearer $Token" -T "$HexFilePath"
+          curl.exe -X PUT "$UploadUrl" -H "Authorization: token $Token" -T "$HexFilePath"
           
           echo "Package published successfully!"
