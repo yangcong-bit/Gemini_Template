@@ -1,29 +1,56 @@
 name: STM32 Keil Automated Build
-run-name: 自动编译 STM32 工程
+run-name: 自动编译并发布 STM32 固件
+
 on:
   push:
     branches:
-      - main  # 只有推送到 main 分支时才触发
+      - main  # 只有推送到 main 分支时才触发流水线
 
 jobs:
-  build:
-    runs-on: windows # 这里的 windows 呼应了你刚才绑定的标签
+  build-and-publish:
+    runs-on: windows # 绑定你 Windows 虚拟机的标签
     steps:
-      - name: 拉取最新代码
+      - name: 1. 拉取最新代码
         uses: actions/checkout@v3
 
-      - name: 调用 Keil 命令行编译
-        # 假设你的工程文件在 MDK-ARM 文件夹下
+      - name: 2. 调用 Keil 命令行编译
         run: |
           echo "开始调用 Keil 进行静默编译..."
-          # 注意：请确保 C:\Keil_v5\UV4\UV4.exe 是你实际的 Keil 安装路径
-          C:\Users\Administrator\AppData\Local\Keil_v5\UV4\UV4.exe -b MDK-ARM\Gemini_Template.uvprojx -j0 -o build_log.txt
+          # 注意：请确保这是你实际的 Keil 安装路径
+          C:\Keil_v5\UV4\UV4.exe -b MDK-ARM\Gemini_Template.uvprojx -j0 -o build_log.txt
           
-      - name: 提取编译产物 (HEX/BIN)
+      - name: 3. 提取编译产物 (作为流水线临时附件)
         uses: actions/upload-artifact@v3
         with:
           name: STM32_Firmware
-          # 提取编译出来的固件和日志，打包供网页端下载
           path: |
             MDK-ARM\*.hex
             MDK-ARM\build_log.txt
+
+      - name: 4. 发布固件为 Gitea 软件包 (永久归档)
+        shell: powershell
+        run: |
+          echo "正在查找编译出的 .hex 固件..."
+          $HexFile = Get-ChildItem -Path MDK-ARM\*.hex | Select-Object -First 1
+          
+          if (-not $HexFile) {
+              Write-Error "编译失败或找不到 .hex 文件！"
+              exit 1
+          }
+          
+          # 自动生成版本号，格式为 1.0.运行次数 (例如 1.0.5)
+          $Version = "1.0.${{ gitea.run_number }}"
+          $PackageName = "STM32_Firmware"
+          
+          # 拼接 API 地址
+          $UploadUrl = "http://192.168.0.85:3000/api/packages/${{ gitea.repository_owner }}/generic/$PackageName/$Version/$($HexFile.Name)"
+          
+          echo "开始上传 $($HexFile.Name) 到软件包仓库，版本号: $Version ..."
+          
+          # 提取临时鉴权 Token
+          $Token = "${{ gitea.token }}"
+          
+          # 执行上传操作
+          curl.exe -X PUT "$UploadUrl" -H "Authorization: Bearer $Token" -T "$($HexFile.FullName)"
+          
+          echo "软件包发布成功！"
