@@ -20,6 +20,10 @@ SystemData_t sys = {
     .pwm_freq     = 1000,      
     .pwm_duty     = 0.5f,       
 
+    .TMP_R = 1,
+    .TMP_K = 1,
+    .NAME_K = 1,
+    .NAME_R = 1,
 };
 
 static Task_t task_list[] = {

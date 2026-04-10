@@ -19,8 +19,8 @@
  * ========================================================== */
 
 // ---------------- [1. PWM 输出映射] ----------------
-#define PWM_TIM_HANDLE    htim1             // PWM所用定时器句柄
-#define PWM_TIM_CHANNEL   TIM_CHANNEL_1     // PWM所用通道
+#define PWM_TIM_HANDLE    htim2             // PWM所用定时器句柄
+#define PWM_TIM_CHANNEL   TIM_CHANNEL_2     // PWM所用通道
 
 // ---------------- [2. ADC 采集映射] ----------------
 #define ADC_R38_HANDLE    hadc1             // R38电位器对应的ADC句柄
@@ -31,8 +31,8 @@
 #define UART_APP_INST     USART1            // 业务串口实例 (用于中断判定)
 
 // ---------------- [4. 频率捕获 CH1 映射 (如 PA1)] ----------------
-#define FREQ_CH1_HANDLE   htim2             // CH1所用定时器句柄
-#define FREQ_CH1_INST     TIM2              // CH1所用定时器实例
+#define FREQ_CH1_HANDLE   htim3             // CH1所用定时器句柄
+#define FREQ_CH1_INST     TIM3              // CH1所用定时器实例
 #define FREQ_CH1_CH_MAIN  TIM_CHANNEL_1     // CH1测周期的主通道
 #define FREQ_CH1_CH_SUB   TIM_CHANNEL_2     // CH1测高电平的副通道
 #define FREQ_CH1_ACTIVE   HAL_TIM_ACTIVE_CHANNEL_1 // 中断回调判断通道
@@ -142,6 +142,29 @@ typedef struct {
     bool     eeprom_save_flag; ///< [触发型] 请求将当前参数打包压入 EEPROM 队列的标志位
     bool     uart_rx_ready;    ///< [触发型] 串口收到一帧完整 DMA 数据的就绪标志位
     
+    float NAME_V;
+    bool NAME_M;
+    float NAME_P;
+    float NAME_MH;
+    float NAME_ML;
+
+    
+    float    start_freq;       // 过渡起点频率
+    float    target_freq;      // 过渡终点频率
+    
+         
+    bool LED;
+    bool para_select;
+    bool is_locked;
+    bool M_flag;
+    
+    uint8_t NAME_R;
+    uint8_t TMP_R;
+    uint8_t NAME_K;
+    uint8_t TMP_K;
+    
+    uint32_t NAME_N;
+        
 
 } SystemData_t;
 

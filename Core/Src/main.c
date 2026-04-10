@@ -28,7 +28,7 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 
-#include "scheduler.h"  // ������߲㼶�ĵ���������
+#include "scheduler.h"
 
 /* USER CODE END Includes */
 
@@ -102,9 +102,9 @@ int main(void)
   MX_USART1_UART_Init();
   MX_TIM1_Init();
   /* USER CODE BEGIN 2 */
-	
-	// 1. 系统业务全栈初始化 (里面包含了 LCD, ADC DMA, I2C, 测频等所有底层的启动)
-	Scheduler_Init();
+    
+    // 1. 系统业务全栈初始化 (里面包含了 LCD, ADC DMA, I2C, 测频等所有底层的启动)
+    Scheduler_Init();
 
 
   /* USER CODE END 2 */
@@ -113,10 +113,10 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-		
-		// 2. 启动时间片轮询引擎，接管整个系统的运行
+    
+    // 2. 启动时间片轮询引擎，接管整个系统的运行
     Scheduler_Run();
-		
+      
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */

@@ -19,6 +19,8 @@
 #include <stdio.h>
 #include <string.h>
 
+float PI=3.14;
+
 /* ==========================================================
  * [模块 1]：核心控制层 (Controller) - 按键消费与逻辑路由
  * @note   建议调度周期：50ms。只修改 sys 字典，绝不碰显存画图。
@@ -29,86 +31,146 @@ void Logic_Ctrl_Proc(void) {
     // 从消息队列中消费所有积压的按键事件
     while (Key_Get_Event(&key_val)) {
         
-        /* --- 【业务逻辑：自由发挥区 - 按键路由】 --- */
-        /* ================= [使用例程参考：按键功能路由] =================
-        switch (key_val) {
-            case 1: // 【B1 短按】: 切换页面 (Data -> Para -> Recd)
-                sys.current_page = (sys.current_page + 1) % 3;
+                 switch (key_val) {
+            case 1:
+            if(sys.current_page== PAGE_DATA){
+            sys.current_page= PAGE_PARA;
+            sys.para_select=0;
+            }else if(sys.current_page== PAGE_PARA){
+            sys.current_page= PAGE_RECD;
+                sys.NAME_R=sys.TMP_R;
+                sys.NAME_K=sys.TMP_K;
+            }else if(sys.current_page== PAGE_RECD){
+            sys.current_page= PAGE_DATA;
+            }
                 break;
                 
-            case 2: // 【B2 短按】: 参数加 (附带上限保护防跑飞)
+            case 2: 
                 if (sys.current_page == PAGE_PARA) {
-                    sys.PH += 100;
-                    if (sys.PH > 10000) sys.PH = 10000;
+                sys.para_select=! sys.para_select;
+                }else if(sys.current_page == PAGE_DATA){
+                    if(sys.M_flag==0){          //在数据界面下，用于切换选择低频或高频模式。按键按下后，5秒内不可再次触发切换功能。 
+                    sys.NAME_M=!sys.NAME_M;
+                    sys.NAME_N++;
+                    sys.M_flag=1;
+                    if(sys.NAME_M==0){
+                    sys.start_freq=8000;
+                    sys.target_freq=4000;
+                    }else if(sys.NAME_M==1){
+                    sys.start_freq=4000;
+                    sys.target_freq=8000;
+                        }
+                    }
+                    
                 }
                 break;
                 
             case 3: // 【B3 短按】: 参数减或页面模式切换
                 if (sys.current_page == PAGE_PARA) {
-                    sys.PH -= 100;
-                    if (sys.PH < 1000) sys.PH = 1000; // 下限保护
-                } else if (sys.current_page == PAGE_DATA) {
-                    sys.flag = !sys.flag; // 切换数据页的显示单位
+                    if(sys.para_select==0){
+                    sys.TMP_R++;
+                    if(sys.TMP_R > 10) sys.TMP_R = 1; // 超过10变回1
+                    }else if(sys.para_select==1){
+                    sys.TMP_K++;
+                    if(sys.TMP_K > 10) sys.TMP_K = 1; // 超过10变回1
+                    }
                 }
                 break;
                 
             case 4: // 【B4 短按】: 触发 EEPROM 保存
-                sys.eeprom_save_flag = true; 
+                if (sys.current_page == PAGE_PARA) {
+                    if(sys.para_select==0){
+                    sys.TMP_R--;
+                        if(sys.TMP_R < 1) sys.TMP_R = 10; // 小于1变回10
+                    }else if(sys.para_select==1){
+                    sys.TMP_K--;
+                        if(sys.TMP_K < 1) sys.TMP_K = 10; // 小于1变回10
+                    }
+                }
                 break;
                 
-            case 11: // 【B1 长按】: 长按触发特殊逻辑 (键值+10)
-                // sys.key_data = 0; 
+            case 14: // 【B1 长按】: 长按触发特殊逻辑 (键值+10)
+                if (sys.current_page == PAGE_DATA){
+                    
+                sys.is_locked =! sys.is_locked;
+                    
+                }
+            
                 break;
         }
-        ================================================================ */
+
     }
 }
 
 /* ==========================================================
  * [模块 2]：全局数据采集与联动中枢 (Model)
- * @note   建议调度周期：10ms~50ms。负责搬运底层数据到 sys 字典，并处理核心逻辑。
+ * @note   建议调度周期：10ms。负责搬运底层数据到 sys 字典，并处理核心逻辑。
  * ========================================================== */
 void Logic_Data_Proc(void) {
     /* --- 【模板核心：固定资产】 --- */
+    
+    static uint16_t TIME_M;
+    static float M_STEP;
+    
+    
     adc_proc(); // 启动底层 ADC 搬运
     rtc_proc(); // 启动底层 RTC 刷新
-
-    /* --- 【业务逻辑：自由发挥区 - 数据换算与联动】 --- */
-    /* ================= [使用例程参考：数据联动与保存] =================
-    // 1. 频率预处理或传感器换算
-    // sys.FA = sys.freq_ch1 - sys.PX;
-    // if (sys.FA < 0) sys.FA = 0;
     
-    // 2. 越限逻辑计算：检测是否超过阈值，记录次数 (防连加)
-    // if (sys.FA > sys.PH) {
-    //     if (!sys.Alog) { // 上升沿触发，防止一直累加
-    //         sys.NHA++;   
-    //         sys.Alog = true;
-    //     }
-    // } else {
-    //     sys.Alog = false;
-    // }
+    if(sys.M_flag==1){
+        TIME_M++;
+        M_STEP=(sys.target_freq-sys.start_freq)/500;//求步进值
+        sys.pwm_freq=sys.start_freq+(TIME_M*M_STEP);//求每次运行的频率
+        if(TIME_M>=500){
+        sys.M_flag=0;
+            TIME_M=0;
+            sys.pwm_freq=sys.target_freq;
+        }
+    }
 
-    // 3. 处理 EEPROM 异步存储请求 (响应按键)
-    // if (sys.eeprom_save_flag) {
-    //     LogData_t log = { .hour = sys.hour, .min = sys.min, .sec = sys.sec, .freq = (uint32_t)sys.FA };
-    //     EEPROM_PushLog(log);          // 压入后台切片写队列，绝不卡死主循环
-    //     sys.eeprom_save_flag = false; // 消费完毕，清空标志
-    // }
+    sys.NAME_V=sys.freq_ch1*2*PI*sys.NAME_R/(100*sys.NAME_K);//求速度
     
-    // 4. 高级：EEPROM 防抖自动保存 (参数修改后停止按键 2秒自动保存)
-    // static uint32_t last_saved_PD = 0xFFFF;  
-    // static uint32_t auto_save_timer = 0;    
-    // if (sys.PD != last_saved_PD) {
-    //     auto_save_timer++; 
-    //     if (auto_save_timer >= 200) { // 稳定 2 秒不按键后保存
-    //         LogData_t new_log = { .freq = sys.PD }; 
-    //         EEPROM_PushLog(new_log);   
-    //         last_saved_PD = sys.PD;    
-    //         auto_save_timer = 0;       
-    //     }
-    // } else { auto_save_timer = 0; }
-    ================================================================ */
+    
+    if(sys.is_locked==0){//锁定占空比调整功能
+        if(sys.r37_voltage<=1){
+        sys.pwm_duty=0.1;
+        }else if(1<sys.r37_voltage && sys.r37_voltage<3){
+        sys.pwm_duty=0.1+((sys.r37_voltage-1)/2)*0.75;
+        }else if(sys.r37_voltage>=3){
+        sys.pwm_duty=0.85;
+        }//占空比调整功能
+    }
+    
+    sys.NAME_P=sys.pwm_duty*100;
+    
+    /* --- 2秒速度极大值防抖统计算法 --- */
+    static float candidate_speed = 0.0f; // 候选打擂台速度
+    static uint16_t speed_timer = 0;     // 2秒稳定计时器
+
+    // 1. 求出实时速度和候选速度的差值 (相当于 fabs)
+    float diff = sys.NAME_V - candidate_speed;
+    if(diff < 0) diff = -diff;
+
+    // 2. 如果速度稳定 (考虑到硬件 ADC 换算的微小抖动，容忍 0.5 的误差)
+    if(diff < 0.5f){
+        speed_timer++;
+        if(speed_timer >= 200){ // 10ms * 200次 = 2000ms = 2秒
+            // 稳定了2秒，可以正式挑战极值了！
+            if(sys.NAME_M == 1 && candidate_speed > sys.NAME_MH) {
+                sys.NAME_MH = candidate_speed;
+            }
+            if(sys.NAME_M == 0 && candidate_speed > sys.NAME_ML) {
+                sys.NAME_ML = candidate_speed;
+            }
+            speed_timer = 200; // 防止定时器无脑累加溢出
+        }
+    }else{
+        // 3. 只要速度发生剧烈变化，立刻换人打擂，并清零计时器！
+        candidate_speed = sys.NAME_V;
+        speed_timer = 0;
+    }
+    
+    
+    
 }
 
 /* ==========================================================
@@ -119,18 +181,28 @@ void Logic_LED_Proc(void) {
     /* --- 【模板核心：擦除上一帧】 --- */
     for(int i = 0; i < 8; i++) sys.led_ctrl[i] = 0;
     
-    /* --- 【业务逻辑：自由发挥区 - 状态映射】 --- */
-    /* ================= [使用例程参考：指示灯映射] =================
-    // 1. 页面指示灯
-    // if (sys.current_page == PAGE_DATA) sys.led_ctrl[0] = 1; // LD1 亮
-    // if (sys.current_page == PAGE_PARA) sys.led_ctrl[1] = 1; // LD2 亮
-    // if (sys.current_page == PAGE_RECD) sys.led_ctrl[2] = 1; // LD3 亮
+    if (sys.current_page == PAGE_DATA) {
+        sys.led_ctrl[0] = 1; // LD1 亮
+    }else{
+        sys.led_ctrl[0] = 0; 
+    }
     
-    // 2. 超标闪烁指示 (LD8 5Hz闪烁，对 200 取余：亮 100ms 灭 100ms)
-    // if (sys.FA > sys.PH && (HAL_GetTick() % 200 < 100)) {
-    //     sys.led_ctrl[7] = 1;
-    // }
-    ================================================================ */
+    if(sys.M_flag==1){
+    
+    if(HAL_GetTick()%200>100){
+        sys.led_ctrl[1] = 1;
+    }else{
+        sys.led_ctrl[1] = 0;
+        }
+    }else{
+        sys.led_ctrl[1] = 0;
+    }
+    
+    if(sys.is_locked==1){
+    sys.led_ctrl[2] = 1;
+    }else{
+    sys.led_ctrl[2] = 0;
+    }
     
     /* --- 【模板核心：提交硬件】 --- */
     LED_Disp();
@@ -206,6 +278,55 @@ void Logic_UI_Proc(void) {
         sprintf(lcd_vram[i], "                    "); // 预填20个空格覆盖旧字符串
     }
 
+    
+    
+         if(sys.current_page == PAGE_DATA) {
+         sprintf(temp, "        DATA");
+         sprintf(lcd_vram[1], "%-20s", temp);     // %-20s 左对齐且用空格补齐20格
+             
+         // 字符串显示
+         sprintf(temp, "     M=%d", sys.NAME_M);
+         sprintf(lcd_vram[3], "%-20s", temp);     // %-20s 左对齐且用空格补齐20格
+        
+        // 浮点数显示
+         sprintf(temp, "     P=%d%%", (int)sys.NAME_P);
+         sprintf(lcd_vram[4], "%-20s", temp);
+         
+         // 格式化时间显示 (补零)
+         sprintf(temp, "     V=%.1f", sys.NAME_V);
+         sprintf(lcd_vram[5], "%-20s", temp);
+         
+        } 
+         else if(sys.current_page == PAGE_PARA) {
+         sprintf(temp, "        PARA     ");
+         sprintf(lcd_vram[1], "%-20s", temp);     // %-20s 左对齐且用空格补齐20格
+           
+         sprintf(temp, "     R=%d", sys.TMP_R);
+         sprintf(lcd_vram[3], "%-20s", temp);
+             
+         sprintf(temp, "     R=%d", sys.TMP_K);
+         sprintf(lcd_vram[4], "%-20s", temp);
+         
+        } else if(sys.current_page == PAGE_RECD) {
+         sprintf(temp, "        RECD");
+         sprintf(lcd_vram[1], "%-20s", temp);     // %-20s 左对齐且用空格补齐20格
+            
+         sprintf(temp, "     N=%d", sys.NAME_N);
+         sprintf(lcd_vram[3], "%-20s", temp);
+            
+         sprintf(temp, "     MH=%.1f", sys.NAME_MH);
+         sprintf(lcd_vram[4], "%-20s", temp);
+            
+         sprintf(temp, "     ML=%.1f", sys.NAME_ML);
+         sprintf(lcd_vram[5], "%-20s", temp);
+
+        }
+    
+    
+    
+    
+    
+    
     /* --- 【业务逻辑：自由发挥区 - UI 显存渲染】 --- */
     /* ================= [使用例程参考：LCD 分页动态渲染] =================
     // if(sys.current_page == PAGE_DATA) {
@@ -241,7 +362,7 @@ void Logic_UI_Proc(void) {
     for(uint8_t i = 0; i < 10; i++) {
         // 利用 strcmp 比对，只有当这一行内容变了，才调用慢速的硬件 SPI 指令
         if (strcmp(lcd_vram[i], lcd_vram_bak[i]) != 0) {
-            LCD_DisplayStringLine(i * 24, (uint8_t *)lcd_vram[i]); 
+            LCD_DisplayStringLine(i * 24, (uint8_t *)lcd_vram[i]);
             strcpy(lcd_vram_bak[i], lcd_vram[i]); // 同步工作显存到备份显存
         }
     }
