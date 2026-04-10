@@ -185,11 +185,16 @@ void Logic_UART_Proc(void) {
 }
 
 /* ==========================================================
- * [模块 5]：LCD 屏幕渲染引擎 (View)
+ * [模块 5]：LCD 屏幕渲染引擎 (View) - 终极双缓冲变色版
  * @note   建议调度周期：100ms (10FPS)。纯粹只读 sys 字典，双缓冲防闪。
  * ========================================================== */
 static char lcd_vram[10][21];      // 当前帧工作显存
-static char lcd_vram_bak[10][21];  // 历史帧备份显存 (防闪屏核心)
+static char lcd_vram_bak[10][21];  // 历史帧文字备份 (防闪屏核心)
+
+static uint16_t lcd_color[10];         // 当前帧前景色显存
+static uint16_t lcd_color_bak[10];     // 历史帧前景色备份
+static uint16_t lcd_bg_color[10];      // 当前帧背景色显存
+static uint16_t lcd_bg_color_bak[10];  // 历史帧背景色备份
 
 void Logic_UI_Proc(void) {
     char temp[32]; 
@@ -197,52 +202,82 @@ void Logic_UI_Proc(void) {
     /* --- 【模板核心：跨页面防残影】 --- */
     static PageState_e last_page = PAGE_DATA;
     if (sys.current_page != last_page) {
-        memset(lcd_vram_bak, 0, sizeof(lcd_vram_bak)); // 切换页面时强制全刷，抹除残影
+        memset(lcd_vram_bak, 0, sizeof(lcd_vram_bak)); 
+        memset(lcd_color_bak, 0, sizeof(lcd_color_bak)); 
+        memset(lcd_bg_color_bak, 0, sizeof(lcd_bg_color_bak)); // 切换页面时，连同颜色备份一起破坏
         last_page = sys.current_page;
     }
 
-    /* --- 【模板核心：擦除画布填充空格】 --- */
+    /* --- 【模板核心：擦除画布填充空格，重置默认黑底白字】 --- */
     for(int i = 0; i < 10; i++) {
         sprintf(lcd_vram[i], "                    "); // 预填20个空格覆盖旧字符串
+        lcd_color[i] = White;    // 默认前景白字
+        lcd_bg_color[i] = Black; // 默认背景黑底
     }
 
     /* --- 【业务逻辑：自由发挥区 - UI 显存渲染】 --- */
-    /* ================= [使用例程参考：LCD 分页动态渲染] =================
+    /* ================= [使用例程参考：LCD 分页与单行颜色高亮] =================
     // if(sys.current_page == PAGE_DATA) {
     //     sprintf(lcd_vram[0], "      DATA PAGE     ");
     //     
-    //     // 字符串显示
-    //     sprintf(temp, "  Plate:%s", sys.temp_v); 
+    //     // 1. 普通浮点数显示 (默认白字黑底)
+    //     sprintf(temp, "  Volt:%.2fV", sys.r37_voltage);
     //     sprintf(lcd_vram[2], "%-20s", temp);     // %-20s 左对齐且用空格补齐20格
     //     
-    //     // 浮点数显示
-    //     sprintf(temp, "  Volt:%.2fV", sys.r37_voltage);
+    //     // 2. 越限报警：超标时这一行变成【红底白字】
+    //     sprintf(temp, "  Speed:%.1f", sys.NAME_V);
     //     sprintf(lcd_vram[4], "%-20s", temp);
+    //     if(sys.NAME_V > 50.0f) {
+    //         lcd_bg_color[4] = Red; // 背景变红，前景色没动所以还是白色
+    //     }
     //     
-    //     // 格式化时间显示 (补零)
-    //     sprintf(temp, "  Time:%02d:%02d:%02d", sys.hour, sys.min, sys.sec);
+    //     // 3. 极值显示：用绿色字体显示
+    //     sprintf(temp, "  Max:%.1f", sys.NAME_MH);
     //     sprintf(lcd_vram[6], "%-20s", temp);
+    //     lcd_color[6] = Green;
     //     
     // } else if(sys.current_page == PAGE_PARA) {
     //     sprintf(lcd_vram[0], "      PARA PAGE     ");
     //     
-    //     // 整数显示
-    //     sprintf(temp, "  Thr_PH:%dHz", sys.PH);
+    //     // 4. 参数选中高亮：被选中调整的参数变成【黄底黑字】
+    //     sprintf(temp, "  Thr_R:%d", sys.NAME_R);
     //     sprintf(lcd_vram[3], "%-20s", temp);
-    //     
-    // } else if(sys.current_page == PAGE_RECD) {
-    //     sprintf(lcd_vram[0], "      RECD PAGE     ");
-    //     sprintf(temp, "  OverCount:%d", sys.NHA);
-    //     sprintf(lcd_vram[4], "%-20s", temp);
-    // }
+    //     if(sys.para_select == 0) { // 假设0代表选中了R
+    //         lcd_color[3] = Black;    // 字体变黑
+    //         lcd_bg_color[3] = Yellow;// 背景变黄
+    //     }
+    //
+    //     sprintf(temp, "  Thr_K:%d", sys.NAME_K);
+    //     sprintf(lcd_vram[5], "%-20s", temp);
+    //     if(sys.para_select == 1) { // 假设1代表选中了K
+    //         lcd_color[5] = Black;
+    //         lcd_bg_color[5] = Yellow;
+    //     }
+    // } 
     ================================================================ */
     
-    /* --- 【模板核心：差异化防闪屏刷新 (严禁删除)】 --- */
+    /* --- 【模板核心：差异化防闪屏刷新引擎 (严禁删除)】 --- */
     for(uint8_t i = 0; i < 10; i++) {
-        // 利用 strcmp 比对，只有当这一行内容变了，才调用慢速的硬件 SPI 指令
-        if (strcmp(lcd_vram[i], lcd_vram_bak[i]) != 0) {
+        // 利用 strcmp 比对，文字变了，或者颜色变了，才调用慢速的硬件 SPI 指令重绘
+        if (strcmp(lcd_vram[i], lcd_vram_bak[i]) != 0 || 
+            lcd_color[i] != lcd_color_bak[i] || 
+            lcd_bg_color[i] != lcd_bg_color_bak[i]) {
+            
+            // 1. 设定底层色彩寄存器
+            LCD_SetTextColor(lcd_color[i]);
+            LCD_SetBackColor(lcd_bg_color[i]);
+            
+            // 2. 刷入屏幕 (行高固定 24)
             LCD_DisplayStringLine(i * 24, (uint8_t *)lcd_vram[i]); 
-            strcpy(lcd_vram_bak[i], lcd_vram[i]); // 同步工作显存到备份显存
+            
+            // 3. 同步工作显存到三个备份区
+            strcpy(lcd_vram_bak[i], lcd_vram[i]); 
+            lcd_color_bak[i] = lcd_color[i];
+            lcd_bg_color_bak[i] = lcd_bg_color[i];
         }
     }
+    
+    // 安全扫尾：恢复成全局标准色，防止污染主循环中其他绘制指令（画圈、清屏等）
+    LCD_SetTextColor(White);
+    LCD_SetBackColor(Black);
 }

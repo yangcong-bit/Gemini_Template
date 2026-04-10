@@ -47,24 +47,45 @@ void Logic_UART_Proc(void) {
 static char lcd_vram[10][21];      
 static char lcd_vram_bak[10][21];  
 
+static uint16_t lcd_color[10];         
+static uint16_t lcd_color_bak[10];     
+static uint16_t lcd_bg_color[10];      
+static uint16_t lcd_bg_color_bak[10];  
+
 void Logic_UI_Proc(void) {
     char temp[32]; 
 
     static PageState_e last_page = PAGE_DATA;
     if (sys.current_page != last_page) {
         memset(lcd_vram_bak, 0, sizeof(lcd_vram_bak)); 
+        memset(lcd_color_bak, 0, sizeof(lcd_color_bak)); 
+        memset(lcd_bg_color_bak, 0, sizeof(lcd_bg_color_bak)); 
         last_page = sys.current_page;
     }
 
     for(int i = 0; i < 10; i++) {
         sprintf(lcd_vram[i], "                    "); 
+        lcd_color[i] = White;    
+        lcd_bg_color[i] = Black; 
     }
 
     for(uint8_t i = 0; i < 10; i++) {
 
-        if (strcmp(lcd_vram[i], lcd_vram_bak[i]) != 0) {
+        if (strcmp(lcd_vram[i], lcd_vram_bak[i]) != 0 || 
+            lcd_color[i] != lcd_color_bak[i] || 
+            lcd_bg_color[i] != lcd_bg_color_bak[i]) {
+
+            LCD_SetTextColor(lcd_color[i]);
+            LCD_SetBackColor(lcd_bg_color[i]);
+
             LCD_DisplayStringLine(i * 24, (uint8_t *)lcd_vram[i]); 
+
             strcpy(lcd_vram_bak[i], lcd_vram[i]); 
+            lcd_color_bak[i] = lcd_color[i];
+            lcd_bg_color_bak[i] = lcd_bg_color[i];
         }
     }
+
+    LCD_SetTextColor(White);
+    LCD_SetBackColor(Black);
 }

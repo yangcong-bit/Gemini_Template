@@ -6,8 +6,8 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-#define PWM_TIM_HANDLE    htim1             
-#define PWM_TIM_CHANNEL   TIM_CHANNEL_1     
+#define PWM_TIM_HANDLE    htim2             
+#define PWM_TIM_CHANNEL   TIM_CHANNEL_2     
 
 #define ADC_R38_HANDLE    hadc1             
 #define ADC_R37_HANDLE    hadc2             
@@ -15,8 +15,8 @@
 #define UART_APP_HANDLE   huart1            
 #define UART_APP_INST     USART1            
 
-#define FREQ_CH1_HANDLE   htim2             
-#define FREQ_CH1_INST     TIM2              
+#define FREQ_CH1_HANDLE   htim3             
+#define FREQ_CH1_INST     TIM3              
 #define FREQ_CH1_CH_MAIN  TIM_CHANNEL_1     
 #define FREQ_CH1_CH_SUB   TIM_CHANNEL_2     
 #define FREQ_CH1_ACTIVE   HAL_TIM_ACTIVE_CHANNEL_1 
@@ -89,7 +89,7 @@ typedef struct {
     uint8_t     eeprom_log_idx;              
 
     bool     eeprom_save_flag; 
-    bool     uart_rx_ready;    
+    bool      uart_rx_ready;    
 
 } SystemData_t;
 
