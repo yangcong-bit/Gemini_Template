@@ -166,7 +166,7 @@ void Logic_UART_Proc(void) {
         //
         // // 3. sscanf 提取带字符串的复杂指令 (如: "VNBR:A1234123015")
         // // 注意：%5s 限制提取 5 个字符防溢出，对应 plate 数组至少要是 char plate[6]
-        // else if (sscanf((char *)uart_rx_buf, "VNBR:%5s", plate) == 1) {
+        // else if (sscanf((char *)uart_rx_buf, "VNBR:%3s%2s", plate1，plate2) == 1) {
         //     strcpy(sys.temp_v, plate); // 安全拷贝至全局字典
         //     UART_SendString("OK\r\n");
         // }
@@ -254,6 +254,23 @@ void Logic_UI_Proc(void) {
     //     if(sys.para_select == 1) { // 假设1代表选中了K
     //         lcd_color[5] = Black;
     //         lcd_bg_color[5] = Yellow;
+    
+    //      //EEPROM的读取
+    //      1. 获取最新记录所在的环形队列槽位索引
+    //      sys.eeprom_log_idx 指向的是下一个即将要写的空槽位，所以最新数据在上一个槽位
+    //      需要做回环越界保护：如果当前是 0，上一个就是 MAX_RECORDS - 1
+    //      uint8_t latest_idx = (sys.eeprom_log_idx == 0) ? (MAX_RECORDS - 1) : (sys.eeprom_log_idx - 1);
+    
+    //      // 2. 直接从字典的内存镜像中提取结构体数据 (耗时为 0，绝对不卡屏幕！)
+    //      LogData_t latest_log = sys.eeprom_history[latest_idx];
+    
+     //     // 3. 格式化并显示到 VRAM 中
+     //     char temp[30];
+     //     sprintf(temp, "  Time: %02d:%02d:%02d", latest_log.hour, latest_log.min, latest_log.sec);
+     //     sprintf(lcd_vram[3], "%-20s", temp);
+    
+     //     sprintf(temp, "  Volt: %.2fV", latest_log.volt);
+     //     sprintf(lcd_vram[5], "%-20s", temp);
     //     }
     // } 
     ================================================================ */
