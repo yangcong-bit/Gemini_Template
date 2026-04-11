@@ -214,15 +214,17 @@ void Logic_UI_Proc(void) {
         lcd_color[i] = White;    // 默认前景白字
         lcd_bg_color[i] = Black; // 默认背景黑底
     }
-
+    
+        sprintf(lcd_vram[1], "      DATA PAGE     ");
+        sprintf(temp, "  Volt:%.2fV", sys.r37_voltage);
+        sprintf(lcd_vram[2], "%-20s", temp);
     /* --- 【业务逻辑：自由发挥区 - UI 显存渲染】 --- */
     /* ================= [使用例程参考：LCD 分页与单行颜色高亮] =================
-    // if(sys.current_page == PAGE_DATA) {
-    //     sprintf(lcd_vram[0], "      DATA PAGE     ");
+     if(sys.current_page == PAGE_DATA) {
+
     //     
     //     // 1. 普通浮点数显示 (默认白字黑底)
-    //     sprintf(temp, "  Volt:%.2fV", sys.r37_voltage);
-    //     sprintf(lcd_vram[2], "%-20s", temp);     // %-20s 左对齐且用空格补齐20格
+
     //     
     //     // 2. 越限报警：超标时这一行变成【红底白字】
     //     sprintf(temp, "  Speed:%.1f", sys.NAME_V);
